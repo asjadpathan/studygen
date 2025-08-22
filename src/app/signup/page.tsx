@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/form';
 import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -59,14 +59,20 @@ export default function SignupPage() {
       );
       const user = userCredential.user;
 
-      // Create a user document in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        email: user.email,
-        createdAt: serverTimestamp(),
-        studyStreak: 0,
-        skillsMastered: 0,
-        timeStudied: 0,
-      });
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        // Create a user document in Firestore
+        await setDoc(userDocRef, {
+          email: user.email,
+          createdAt: serverTimestamp(),
+          studyStreak: 0,
+          skillsMastered: 0,
+          timeStudied: 0,
+        });
+      }
+
 
       toast({
         title: 'Account Created',
