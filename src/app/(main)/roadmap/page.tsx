@@ -16,7 +16,7 @@ interface Roadmap {
   createdAt: {
     toDate: () => Date;
   };
-  roadmap: {
+  roadmap?: {
     title: string;
     content: string;
   }[];
@@ -101,7 +101,7 @@ export default function RoadmapListPage() {
             </CardHeader>
             <CardContent>
                <Accordion type="single" collapsible className="w-full">
-                  {roadmap.roadmap.map((item, index) => (
+                  {Array.isArray(roadmap.roadmap) && roadmap.roadmap.map((item, index) => (
                     <AccordionItem value={`item-${index}`} key={index}>
                       <AccordionTrigger>{item.title}</AccordionTrigger>
                       <AccordionContent>
