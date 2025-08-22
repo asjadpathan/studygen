@@ -41,16 +41,17 @@ export function MainHeader() {
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-10">
        <SidebarTrigger />
       <div className="w-full flex-1">
-        <form onSubmit={handleSearch}>
-          <div className="relative">
+        <form onSubmit={handleSearch} className="flex items-center gap-2">
+          <div className="relative w-full md:w-2/3 lg:w-1/3">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               name="search"
               placeholder="Search topics, concepts..."
-              className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+              className="w-full appearance-none bg-background pl-8 shadow-none"
             />
           </div>
+          <Button type="submit" size="sm">Search</Button>
         </form>
       </div>
        <Select defaultValue="en">
