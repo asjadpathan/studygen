@@ -23,11 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { auth } from '@/lib/firebase';
-import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -40,7 +36,7 @@ const formSchema = z.object({
     .min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -56,28 +52,15 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/dashboard');
-    } catch (error: any) {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
       toast({
-        title: 'Login Failed',
-        description: error.message,
-        variant: 'destructive',
+        title: 'Account Created',
+        description: "You have successfully created an account. Please login.",
       });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleGoogleLogin() {
-    setIsLoading(true);
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      router.push('/');
     } catch (error: any) {
       toast({
-        title: 'Login Failed',
+        title: 'Sign-up Failed',
         description: error.message,
         variant: 'destructive',
       });
@@ -94,11 +77,10 @@ export default function LoginPage() {
             <Logo />
           </div>
           <CardTitle className="text-3xl font-bold text-center font-headline">
-            Welcome to StudyGenius
+            Create an Account
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access your personalized learning
-            dashboard
+            Start your learning journey with StudyGenius today!
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -127,16 +109,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center">
-                      <FormLabel>Password</FormLabel>
-                      <Link
-                        href="#"
-                        className="ml-auto inline-block text-sm underline"
-                        prefetch={false}
-                      >
-                        Forgot your password?
-                      </Link>
-                    </div>
+                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
                         id="password"
@@ -150,24 +123,15 @@ export default function LoginPage() {
               />
               <Button type="submit" className="w-full font-bold" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login
+                Sign Up
               </Button>
             </form>
           </Form>
-          <Button
-            variant="outline"
-            className="w-full mt-4"
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-          >
-             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Login with Google
-          </Button>
 
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="underline" prefetch={false}>
-              Sign up
+            Already have an account?{' '}
+            <Link href="/" className="underline" prefetch={false}>
+              Login
             </Link>
           </div>
         </CardContent>
