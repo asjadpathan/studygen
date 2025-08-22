@@ -19,7 +19,7 @@ const PersonalizedRoadmapInputSchema = z.object({
     .describe('The user specified goals for learning, e.g. "Pass the AP Calculus Exam".'),
   expertise: z
     .string()
-    .describe('The users current expertise level, e.g. "Some experience with Calculus already".'),
+    .describe('The users current expertise level, e.g. "Some experience with Calculus already". This may also contain results from a pre-assessment quiz.'),
   availableStudyTime: z
     .string()
     .describe('The amount of time the user has available to study, e.g. "1 hour per day for 3 months".'),
@@ -29,7 +29,7 @@ export type PersonalizedRoadmapInput = z.infer<typeof PersonalizedRoadmapInputSc
 const PersonalizedRoadmapOutputSchema = z.object({
   roadmap: z
     .string()
-    .describe('A personalized learning roadmap tailored to the user goals, expertise, and available study time.'),
+    .describe('A personalized learning roadmap tailored to the user goals, expertise, and available study time. It should be interactive and detailed, broken down into sections.'),
 });
 export type PersonalizedRoadmapOutput = z.infer<typeof PersonalizedRoadmapOutputSchema>;
 
@@ -46,12 +46,15 @@ const personalizedRoadmapPrompt = ai.definePrompt({
   prompt: `You are an expert learning roadmap generator.
 
   Based on the user's goals, expertise, and available study time, generate a personalized learning roadmap.
+  If the user's expertise contains results from a skill assessment, use that to identify knowledge gaps and tailor the roadmap to address them specifically.
+  The roadmap should be highly detailed, broken down into weekly modules, and include suggestions for projects, quizzes, and resources. Make it engaging and encouraging.
 
   Goals: {{{goals}}}
   Expertise: {{{expertise}}}
   Available Study Time: {{{availableStudyTime}}}
 
-  Roadmap:`,
+  Generate the roadmap in Markdown format.
+  `,
 });
 
 const personalizedRoadmapFlow = ai.defineFlow(
