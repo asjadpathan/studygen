@@ -212,12 +212,10 @@ export default function RoadmapPage() {
                         className="pl-7 space-y-2"
                     >
                         {q.options.map((option, j) => (
-                            <FormItem key={j} className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                    <RadioGroupItem value={option} id={`q${i}-option${j}`} />
-                                </FormControl>
+                            <div key={j} className="flex items-center space-x-3 space-y-0">
+                                <RadioGroupItem value={option} id={`q${i}-option${j}`} />
                                 <Label htmlFor={`q${i}-option${j}`} className="font-normal">{option}</Label>
-                            </FormItem>
+                            </div>
                         ))}
                     </RadioGroup>
                 </div>
