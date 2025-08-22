@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,6 +9,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, BookOpen, ExternalLink, HelpCircle, Lightbulb } from 'lucide-react';
+
+// A simple markdown to HTML converter
+function markdownToHtml(markdown: string) {
+    if (!markdown) return '';
+    return markdown
+        .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mb-2 mt-4">$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mb-3 mt-5">$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mb-4 mt-6">$1</h1>')
+        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+        .replace(/\*(.*)\*/gim, '<em>$1</em>')
+        .replace(/`([^`]+)`/gim, '<code class="bg-muted text-muted-foreground rounded-sm px-1 py-0.5 font-mono text-sm">$1</code>')
+        .replace(/^- (.*$)/gim, '<li class="ml-4 mb-1">$1</li>')
+        .replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>')
+        .replace(/<\/ul>\n<ul>/gim, '')
+        .replace(/\n/g, '<br />');
+}
+
 
 export default function SearchResults() {
   const searchParams = useSearchParams();
@@ -109,9 +127,10 @@ export default function SearchResults() {
                     <CardTitle className="flex items-center gap-2 font-headline"><BookOpen className="text-primary"/> Explanation</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                        {results.explanation}
-                    </div>
+                    <div 
+                      className="prose prose-sm dark:prose-invert max-w-none"
+                      dangerouslySetInnerHTML={{ __html: markdownToHtml(results.explanation) }}
+                    />
                 </CardContent>
             </Card>
 
