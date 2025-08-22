@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -79,6 +80,10 @@ export default function DashboardPage() {
           <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
           <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
         </div>
+        <div className="grid gap-4 md:grid-cols-2">
+            <Card><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-48 w-full" /></CardContent></Card>
+            <Card><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardContent></Card>
+        </div>
       </div>
       )
   }
@@ -122,8 +127,8 @@ export default function DashboardPage() {
         </Card>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 hover:shadow-lg transition-shadow duration-300">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <Card className="lg:col-span-3 hover:shadow-lg transition-shadow duration-300">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-headline">
               <TrendingUp className="h-6 w-6" />
@@ -152,7 +157,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-4 lg:col-span-3 hover:shadow-lg transition-shadow duration-300">
+        <Card className="lg:col-span-2 hover:shadow-lg transition-shadow duration-300">
           <CardHeader>
             <CardTitle className="font-headline">Upcoming Lessons</CardTitle>
             <CardDescription>Your next steps in mastering your subjects.</CardDescription>
