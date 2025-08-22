@@ -25,8 +25,6 @@ import {
 import { auth } from '@/lib/firebase';
 import {
   signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -57,23 +55,6 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast({
-        title: 'Login Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleGoogleLogin() {
-    setIsLoading(true);
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -154,15 +135,6 @@ export default function LoginPage() {
               </Button>
             </form>
           </Form>
-          <Button
-            variant="outline"
-            className="w-full mt-4"
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-          >
-             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Login with Google
-          </Button>
 
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{' '}
