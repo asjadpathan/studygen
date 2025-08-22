@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,8 +21,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -52,10 +52,25 @@ export default function SignupPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        values.email,
+        values.password
+      );
+      const user = userCredential.user;
+
+      // Create a user document in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        email: user.email,
+        createdAt: serverTimestamp(),
+        studyStreak: 0,
+        skillsMastered: 0,
+        timeStudied: 0,
+      });
+
       toast({
         title: 'Account Created',
-        description: "You have successfully created an account. Please login.",
+        description: 'You have successfully created an account. Please login.',
       });
       router.push('/');
     } catch (error: any) {
@@ -135,7 +150,7 @@ export default function SignupPage() {
             </Link>
           </div>
         </CardContent>
-      </Card>
+      </C>
     </div>
   );
 }

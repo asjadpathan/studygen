@@ -12,6 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, AlertTriangle, Map } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   goals: z.string().min(10, { message: 'Please describe your goals in more detail.' }),
@@ -23,6 +26,7 @@ export default function RoadmapPage() {
   const [roadmap, setRoadmap] = useState<PersonalizedRoadmapOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,9 +41,29 @@ export default function RoadmapPage() {
     setIsLoading(true);
     setRoadmap(null);
     setError(null);
+    const user = auth.currentUser;
+    if (!user) {
+      setError('You must be logged in to generate a roadmap.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result = await generatePersonalizedRoadmap(values);
       setRoadmap(result);
+
+      const roadmapRef = doc(collection(db, 'users', user.uid, 'roadmaps'));
+      await setDoc(roadmapRef, {
+        ...values,
+        ...result,
+        createdAt: serverTimestamp(),
+      });
+      
+      toast({
+        title: "Roadmap Saved",
+        description: "Your new roadmap has been saved to your profile.",
+      });
+
     } catch (e) {
       setError('Failed to generate roadmap. Please try again.');
       console.error(e);

@@ -11,6 +11,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Loader2, Lightbulb, BarChart3, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+
 
 const formSchema = z.object({
   topic: z.string().min(2, { message: 'Topic must be at least 2 characters.' }),
@@ -20,6 +24,7 @@ export default function AssessmentPage() {
   const [assessment, setAssessment] = useState<AssessSkillOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -32,9 +37,30 @@ export default function AssessmentPage() {
     setIsLoading(true);
     setAssessment(null);
     setError(null);
+
+    const user = auth.currentUser;
+    if (!user) {
+      setError('You must be logged in to take an assessment.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result = await assessSkill(values);
       setAssessment(result);
+      
+      const assessmentRef = doc(collection(db, 'users', user.uid, 'assessments'));
+      await setDoc(assessmentRef, {
+        ...result,
+        topic: values.topic,
+        createdAt: serverTimestamp(),
+      });
+      
+      toast({
+        title: "Assessment Saved",
+        description: "Your skill assessment has been saved to your profile.",
+      });
+
     } catch (e) {
       setError('Failed to generate assessment. Please try again.');
       console.error(e);

@@ -1,10 +1,15 @@
 "use client"
 
-import { Flame, CheckCircle, Clock, TrendingUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Flame, CheckCircle, Clock, TrendingUp, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const chartData = [
   { month: "January", progress: 65 },
@@ -23,7 +28,61 @@ const chartConfig = {
   },
 }
 
+interface UserData {
+  studyStreak: number;
+  skillsMastered: number;
+  timeStudied: number; // in minutes
+}
+
 export default function DashboardPage() {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+          if (doc.exists()) {
+            setUserData(doc.data() as UserData);
+          } else {
+            // Handle case where user doc doesn't exist
+            console.log("No such document!");
+          }
+          setLoading(false);
+        });
+        return () => unsubscribeSnapshot();
+      } else {
+        setUserData(null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  const formatTime = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}m`;
+  }
+  
+  if (loading) {
+      return (
+      <div className="flex flex-col gap-8">
+        <div>
+          <Skeleton className="h-9 w-1/3" />
+          <Skeleton className="h-5 w-1/2 mt-2" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+        </div>
+      </div>
+      )
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -37,7 +96,7 @@ export default function DashboardPage() {
             <Flame className="h-5 w-5 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12 days</div>
+            <div className="text-2xl font-bold">{userData?.studyStreak ?? 0} days</div>
             <p className="text-xs text-muted-foreground">Keep up the great work!</p>
           </CardContent>
         </Card>
@@ -47,7 +106,7 @@ export default function DashboardPage() {
             <CheckCircle className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8 / 25</div>
+            <div className="text-2xl font-bold">{userData?.skillsMastered ?? 0} / 25</div>
             <p className="text-xs text-muted-foreground">+2 this week</p>
           </CardContent>
         </Card>
@@ -57,7 +116,7 @@ export default function DashboardPage() {
             <Clock className="h-5 w-5 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">7h 32m</div>
+            <div className="text-2xl font-bold">{formatTime(userData?.timeStudied ?? 0)}</div>
             <p className="text-xs text-muted-foreground">On track with your goals</p>
           </CardContent>
         </Card>
