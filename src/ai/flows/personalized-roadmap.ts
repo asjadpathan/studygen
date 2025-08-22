@@ -28,8 +28,15 @@ export type PersonalizedRoadmapInput = z.infer<typeof PersonalizedRoadmapInputSc
 
 const PersonalizedRoadmapOutputSchema = z.object({
   roadmap: z
-    .string()
-    .describe('A personalized learning roadmap tailored to the user goals, expertise, and available study time. It should be interactive and detailed, broken down into sections.'),
+    .array(
+      z.object({
+        title: z.string().describe('The title of the module.'),
+        content: z
+          .string()
+          .describe('The detailed content of the module, including concepts, resources, and exercises. Should be in Markdown format.'),
+      })
+    )
+    .describe('A personalized learning roadmap tailored to the user goals, expertise, and available study time. It should be broken down into a series of modules.'),
 });
 export type PersonalizedRoadmapOutput = z.infer<typeof PersonalizedRoadmapOutputSchema>;
 
@@ -53,7 +60,7 @@ const personalizedRoadmapPrompt = ai.definePrompt({
   Expertise: {{{expertise}}}
   Available Study Time: {{{availableStudyTime}}}
 
-  Generate the roadmap in Markdown format.
+  Generate the roadmap as a JSON object containing a 'roadmap' array. Each element in the array should be a module with a 'title' and 'content' field. The content should be in Markdown format.
   `,
 });
 

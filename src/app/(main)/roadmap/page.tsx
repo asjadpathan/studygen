@@ -18,6 +18,7 @@ import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const formSchema = z.object({
   goals: z.string().min(10, { message: 'Please describe your goals in more detail.' }),
@@ -245,14 +246,10 @@ export default function RoadmapPage() {
           <CardContent>
             {isLoading && (
                <div className="space-y-4">
-                <Skeleton className="h-6 w-1/3" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-full" />
-                 <br />
-                 <Skeleton className="h-6 w-1/4" />
-                 <Skeleton className="h-4 w-full" />
-                 <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
               </div>
             )}
             {error && (
@@ -261,9 +258,18 @@ export default function RoadmapPage() {
               </div>
             )}
             {roadmap && (
-               <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap animate-in fade-in-50">
-                {roadmap.roadmap}
-              </div>
+               <Accordion type="single" collapsible className="w-full">
+                  {roadmap.roadmap.map((item, index) => (
+                    <AccordionItem value={`item-${index}`} key={index}>
+                      <AccordionTrigger>{item.title}</AccordionTrigger>
+                      <AccordionContent>
+                         <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                          {item.content}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+              </Accordion>
             )}
              {!isLoading && !roadmap && !error && (
               <div className="text-center text-muted-foreground py-16">
