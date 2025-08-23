@@ -227,23 +227,21 @@ export default function CreateRoadmapPage() {
                 )}
               />
 
-              <FormItem>
-                <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Learning Style(s)</FormLabel>
-                <FormDescription className="text-gray-600 dark:text-gray-400">
-                  Select one or more styles that work best for you.
-                </FormDescription>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {learningStyles.map((item) => (
-                    <FormField
-                      key={item.id}
-                      control={form.control}
-                      name="learningStyle"
-                      render={({ field }) => {
-                        const isSelected = field.value?.includes(item.id);
-                        return (
-                          <FormItem key={item.id} className="flex-1">
-                            <FormControl>
+              <FormField
+                  control={form.control}
+                  name="learningStyle"
+                  render={({ field }) => (
+                    <FormItem>
+                       <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Learning Style(s)</FormLabel>
+                       <FormDescription className="text-gray-600 dark:text-gray-400">
+                          Select one or more styles that work best for you.
+                       </FormDescription>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        {learningStyles.map((item) => {
+                           const isSelected = field.value?.includes(item.id);
+                           return (
                               <div
+                                key={item.id}
                                 className={`rounded-xl p-4 border-2 cursor-pointer transition-all ${isSelected
                                   ? `border-transparent bg-gradient-to-r ${item.color} text-white shadow-md`
                                   : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-gray-700'}`
@@ -258,66 +256,62 @@ export default function CreateRoadmapPage() {
                                 <div className="flex items-center gap-3">
                                   <Checkbox
                                     checked={isSelected}
-                                    readOnly // The div handles the click
                                     className={`${isSelected ? 'border-white bg-white/20' : ''}`}
+                                    // Let the div handle the click to avoid nested interactive elements
+                                    readOnly 
                                   />
                                   <FormLabel className="font-normal cursor-pointer text-current">
                                     {item.label}
                                   </FormLabel>
                                 </div>
                               </div>
-                            </FormControl>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
+                           )
+                        })}
+                       </div>
+                       <FormMessage />
+                    </FormItem>
+                )}
+              />
 
-              <FormItem>
-                <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Resource Types</FormLabel>
-                <FormDescription className="text-gray-600 dark:text-gray-400">
-                  What kind of materials do you prefer?
-                </FormDescription>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {resourceTypes.map((item) => (
-                    <FormField
-                      key={item.id}
-                      control={form.control}
-                      name="preferredResourceTypes"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={item.id}
-                            className="flex flex-row items-center space-x-3 space-y-0"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...(field.value || []), item.id])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                          (value) => value !== item.id
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal flex items-center gap-2">
-                              <span className="text-lg">{item.icon}</span> {item.label}
-                            </FormLabel>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
+              <FormField
+                control={form.control}
+                name="preferredResourceTypes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Resource Types</FormLabel>
+                    <FormDescription className="text-gray-600 dark:text-gray-400">
+                      What kind of materials do you prefer?
+                    </FormDescription>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      {resourceTypes.map((item) => (
+                        <FormItem
+                          key={item.id}
+                          className="flex flex-row items-center space-x-3 space-y-0"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(item.id)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...(field.value || []), item.id])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== item.id
+                                      )
+                                    );
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal flex items-center gap-2">
+                            <span className="text-lg">{item.icon}</span> {item.label}
+                          </FormLabel>
+                        </FormItem>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
