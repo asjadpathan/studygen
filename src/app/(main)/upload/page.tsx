@@ -4,22 +4,37 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UploadCloud, File, X, Loader2, AlertTriangle, BookText, HelpCircle } from 'lucide-react';
+import { UploadCloud, File, X, Loader2, AlertTriangle, BookText, HelpCircle, Lightbulb, CheckCircle2, XCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { processMaterial, ProcessMaterialOutput } from '@/ai/flows/process-material';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { generateQuizAndExplanation } from '@/ai/flows/active-feedback';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+
+type QuizItem = ProcessMaterialOutput['quiz'][0];
 
 export default function UploadPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ProcessMaterialOutput | null>(null);
+  
+  // State for interactive quiz
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [submitted, setSubmitted] = useState<Record<number, boolean>>({});
+  const [explanations, setExplanations] = useState<Record<number, string>>({});
+  const [loadingExplanation, setLoadingExplanation] = useState<Record<number, boolean>>({});
+
   const { toast } = useToast();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles(prevFiles => [...prevFiles, ...acceptedFiles]);
+    setFiles(prevFiles => [acceptedFiles[0]]); // Only allow one file
     setResults(null);
     setError(null);
+    setAnswers({});
+    setSubmitted({});
+    setExplanations({});
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -82,6 +97,35 @@ export default function UploadPage() {
         setIsProcessing(false);
     }
   };
+
+  const handleAnswerChange = (questionIndex: number, answer: string) => {
+    setAnswers(prev => ({...prev, [questionIndex]: answer}));
+  }
+
+  const handleQuizSubmit = async (questionIndex: number, question: QuizItem) => {
+    const userAnswer = answers[questionIndex];
+    if (!userAnswer) return;
+
+    setSubmitted(prev => ({...prev, [questionIndex]: true}));
+    
+    const isCorrect = userAnswer === question.correctAnswer;
+    if(!isCorrect) {
+        setLoadingExplanation(prev => ({...prev, [questionIndex]: true}));
+        try {
+            const result = await generateQuizAndExplanation({
+                topic: `the context of the question: "${question.question}"`,
+                userAnswer: userAnswer,
+                correctAnswer: question.correctAnswer,
+            });
+            setExplanations(prev => ({...prev, [questionIndex]: result.explanation}));
+        } catch (e) {
+            console.error("Failed to get explanation", e);
+            setExplanations(prev => ({...prev, [questionIndex]: "Sorry, couldn't load an explanation."}));
+        } finally {
+            setLoadingExplanation(prev => ({...prev, [questionIndex]: false}));
+        }
+    }
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -163,25 +207,84 @@ export default function UploadPage() {
              <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><HelpCircle className="text-primary"/> Generated Quiz</CardTitle>
+                     <CardDescription>Test your knowledge based on the uploaded material.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                   <Accordion type="single" collapsible className="w-full">
-                    {Array.isArray(results.quiz) && results.quiz.map((item, index) => (
-                        <AccordionItem value={`item-${index}`} key={index}>
-                        <AccordionTrigger>{item.question}</AccordionTrigger>
-                        <AccordionContent>
-                            <ul className="space-y-2 pl-4">
-                            {item.options.map((option, i) => (
-                                <li key={i} className={`text-muted-foreground ${option === item.correctAnswer ? 'font-bold text-primary' : ''}`}>
-                                    {option}
-                                </li>
-                            ))}
-                            </ul>
-                        </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                    </Accordion>
-                </CardContent>
+                <CardContent className="space-y-8">
+                    {Array.isArray(results.quiz) && results.quiz.map((item, index) => {
+                        const isSubmitted = submitted[index];
+                        const userAnswer = answers[index];
+                        const isCorrect = isSubmitted && userAnswer === item.correctAnswer;
+                        const isIncorrect = isSubmitted && userAnswer !== item.correctAnswer;
+                        
+                        return (
+                            <div key={index} className="border-t pt-6">
+                                <p className="font-semibold mb-4">{index + 1}. {item.question}</p>
+                                <RadioGroup
+                                    value={userAnswer}
+                                    onValueChange={(value) => handleAnswerChange(index, value)}
+                                    disabled={isSubmitted}
+                                    className="space-y-2"
+                                >
+                                    {item.options.map((option, i) => {
+                                        const isCorrectOption = option === item.correctAnswer;
+                                        const isSelectedOption = option === userAnswer;
+                                        return (
+                                             <Label key={i} htmlFor={`q${index}-option${i}`} className={`flex items-center gap-3 p-3 rounded-md border transition-all ${
+                                                isSubmitted && isCorrectOption ? 'border-green-500 bg-green-500/10' : ''
+                                             } ${
+                                                isSubmitted && isSelectedOption && !isCorrectOption ? 'border-destructive bg-destructive/10' : ''
+                                             }`}>
+                                                <RadioGroupItem value={option} id={`q${index}-option${i}`} disabled={isSubmitted} />
+                                                <span>{option}</span>
+                                            </Label>
+                                        )
+                                    })}
+                                </RadioGroup>
+                                <div className="mt-4">
+                                     {!isSubmitted && (
+                                        <Button 
+                                            size="sm"
+                                            onClick={() => handleQuizSubmit(index, item)}
+                                            disabled={!userAnswer}
+                                        >
+                                            Submit
+                                        </Button>
+                                    )}
+
+                                    {isSubmitted && (
+                                        isCorrect ? (
+                                             <Alert variant="default" className="border-green-500 text-green-700">
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                <AlertTitle>Correct!</AlertTitle>
+                                            </Alert>
+                                        ) : (
+                                            <Alert variant="destructive">
+                                                <XCircle className="h-4 w-4" />
+                                                <AlertTitle>Incorrect!</AlertTitle>
+                                                <AlertDescription>The correct answer is: <strong>{item.correctAnswer}</strong></AlertDescription>
+                                            </Alert>
+                                        )
+                                    )}
+
+                                    {loadingExplanation[index] && (
+                                        <div className="flex items-center gap-2 mt-4 text-muted-foreground">
+                                            <Loader2 className="h-4 w-4 animate-spin"/>
+                                            <span>Generating explanation...</span>
+                                        </div>
+                                    )}
+
+                                    {explanations[index] && (
+                                        <Alert className="mt-4 animate-in fade-in-50">
+                                            <Lightbulb className="h-4 w-4" />
+                                            <AlertTitle>Explanation</AlertTitle>
+                                            <AlertDescription className="whitespace-pre-wrap">{explanations[index]}</AlertDescription>
+                                        </Alert>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })}
+                    </CardContent>
             </Card>
         </div>
       )}
