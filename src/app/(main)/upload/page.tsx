@@ -4,15 +4,49 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UploadCloud, File, X, Loader2, AlertTriangle, BookText, HelpCircle, Lightbulb, CheckCircle2, XCircle } from 'lucide-react';
+import { UploadCloud, File, X, Loader2, AlertTriangle, BookText, HelpCircle, Lightbulb, CheckCircle2, XCircle, Layers } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { processMaterial, ProcessMaterialOutput } from '@/ai/flows/process-material';
 import { generateQuizAndExplanation } from '@/ai/flows/active-feedback';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 type QuizItem = ProcessMaterialOutput['quiz'][0];
+type FlashcardItem = ProcessMaterialOutput['flashcards'][0];
+
+const Flashcard = ({ card }: { card: FlashcardItem }) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  return (
+    <div
+      className="group h-48 w-full cursor-pointer [perspective:1000px]"
+      onClick={() => setIsFlipped(!isFlipped)}
+    >
+      <div
+        className={cn(
+          "relative h-full w-full rounded-xl shadow-md transition-transform duration-500 [transform-style:preserve-3d]",
+          isFlipped ? '[transform:rotateY(180deg)]' : ''
+        )}
+      >
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card p-4 text-center [backface-visibility:hidden]">
+          <div>
+             <p className="text-sm text-muted-foreground">Term</p>
+             <p className="font-bold text-lg">{card.term}</p>
+          </div>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card p-4 text-center [transform:rotateY(180deg)] [backface-visibility:hidden]">
+           <div>
+             <p className="text-sm text-muted-foreground">Definition</p>
+             <p className="text-sm">{card.definition}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 export default function UploadPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -134,7 +168,7 @@ export default function UploadPage() {
         <p className="text-muted-foreground">Convert your study guides into interactive quizzes and flashcards.</p>
       </div>
 
-      <Card className="max-w-3xl mx-auto w-full">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="font-headline">Upload Your Study Guide</CardTitle>
           <CardDescription>Drag and drop your file here or click to browse. Supported formats: PDF, DOCX, TXT, PNG, JPG.</CardDescription>
@@ -184,7 +218,7 @@ export default function UploadPage() {
       </Card>
       
        {error && (
-         <Card className="max-w-3xl mx-auto w-full border-destructive">
+         <Card className="w-full border-destructive">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle/> Error</CardTitle>
           </CardHeader>
@@ -195,8 +229,8 @@ export default function UploadPage() {
       )}
 
       {results && (
-        <div className="max-w-3xl mx-auto w-full space-y-8 animate-in fade-in-50">
-            <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start animate-in fade-in-50">
+            <Card className="lg:col-span-2">
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><BookText className="text-primary"/> Summary</CardTitle>
                 </CardHeader>
@@ -204,7 +238,22 @@ export default function UploadPage() {
                     <p className="text-muted-foreground whitespace-pre-wrap">{results.summary}</p>
                 </CardContent>
             </Card>
-             <Card>
+
+            <div className="lg:col-span-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><Layers className="text-primary"/> Generated Flashcards</CardTitle>
+                        <CardDescription>Click a card to flip it and see the definition.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Array.isArray(results.flashcards) && results.flashcards.map((card, index) => (
+                           <Flashcard key={index} card={card} />
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
+            
+             <Card className="lg:col-span-2">
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><HelpCircle className="text-primary"/> Generated Quiz</CardTitle>
                      <CardDescription>Test your knowledge based on the uploaded material.</CardDescription>

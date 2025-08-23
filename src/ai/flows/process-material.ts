@@ -21,13 +21,23 @@ export type ProcessMaterialInput = z.infer<typeof ProcessMaterialInputSchema>;
 
 const ProcessMaterialOutputSchema = z.object({
   summary: z.string().describe('A concise summary of the provided material.'),
-  quiz: z.array(
-    z.object({
-      question: z.string().describe('The quiz question.'),
-      options: z.array(z.string()).describe('The multiple-choice options.'),
-      correctAnswer: z.string().describe('The correct answer.'),
-    })
-  ).describe('A multiple-choice quiz based on the material.'),
+  quiz: z
+    .array(
+      z.object({
+        question: z.string().describe('The quiz question.'),
+        options: z.array(z.string()).describe('The multiple-choice options.'),
+        correctAnswer: z.string().describe('The correct answer.'),
+      })
+    )
+    .describe('A multiple-choice quiz with 5-10 questions based on the key concepts in the material.'),
+  flashcards: z
+    .array(
+      z.object({
+        term: z.string().describe('The key term or concept for the flashcard front.'),
+        definition: z.string().describe('The definition or explanation for the flashcard back.'),
+      })
+    )
+    .describe('A set of flashcards with terms and definitions based on the material.'),
 });
 export type ProcessMaterialOutput = z.infer<typeof ProcessMaterialOutputSchema>;
 
@@ -47,6 +57,7 @@ const prompt = ai.definePrompt({
   1. Extract the text content from the document.
   2. Generate a concise summary of the content.
   3. Create a multiple-choice quiz with 5-10 questions based on the key concepts in the material. For each question, provide 4 options and indicate the correct answer.
+  4. Create a list of 5-10 flashcards with key terms and their definitions from the material.
 
   File: {{media url=fileDataUri}}
 
