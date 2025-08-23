@@ -8,3 +8,4 @@ import '@/ai/flows/search-topic.ts';
 import '@/ai/flows/process-material.ts';
 import '@/ai/flows/get-concept-explanation.ts';
 import '@/ai/flows/find-resources.ts';
+import '@/ai/flows/review-quiz.ts';

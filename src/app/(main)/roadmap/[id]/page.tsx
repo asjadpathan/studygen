@@ -7,7 +7,7 @@ import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc } from '
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Map, Loader2, BookOpen, HelpCircle, CheckCircle2, XCircle, Lightbulb, AlertTriangle, ExternalLink, Bookmark, CheckSquare, BrainCircuit, Trash2 } from 'lucide-react';
+import { Map, Loader2, BookOpen, HelpCircle, CheckCircle2, XCircle, Lightbulb, AlertTriangle, ExternalLink, Bookmark, CheckSquare, BrainCircuit, Trash2, Sparkles, ChevronDown, ChevronRight, Target, Clock, BarChart3, ArrowRight, RefreshCw, X } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getConceptExplanation, GetConceptExplanationOutput } from '@/ai/flows/get-concept-explanation';
 import { generateQuizAndExplanation, QuizAndExplanationOutput } from '@/ai/flows/active-feedback';
@@ -27,6 +27,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { generateReviewQuiz, ReviewQuizOutput } from '@/ai/flows/review-quiz';
 
 interface Roadmap {
   id: string;
@@ -43,6 +48,8 @@ interface Roadmap {
 }
 
 type QuizState = 'idle' | 'loading' | 'ready' | 'answered';
+type ReviewQuizState = 'idle' | 'loading' | 'ready' | 'submitted' | 'error';
+type QuizItem = ReviewQuizOutput['quiz'][0];
 
 function markdownToHtml(markdown: string) {
     if (!markdown) return '';
@@ -85,6 +92,13 @@ export default function RoadmapDetailPage() {
   // State for resources
   const [resources, setResources] = useState<SearchTopicOutput['resources'] | null>(null);
   const [isLoadingResources, setIsLoadingResources] = useState(false);
+
+  // State for Review Quiz
+  const [isReviewQuizOpen, setIsReviewQuizOpen] = useState(false);
+  const [reviewQuizState, setReviewQuizState] = useState<ReviewQuizState>('idle');
+  const [reviewQuizData, setReviewQuizData] = useState<QuizItem[]>([]);
+  const [reviewQuizAnswers, setReviewQuizAnswers] = useState<Record<number, string>>({});
+  const [reviewQuizScore, setReviewQuizScore] = useState<number | null>(null);
 
   const handleConceptClick = useCallback(async (concept: string, currentRoadmap: Roadmap) => {
     const conceptKey = `${currentRoadmap.id}-${concept}`;
@@ -239,19 +253,53 @@ export default function RoadmapDetailPage() {
         toast({ title: "Error", description: "Could not delete the roadmap.", variant: "destructive"});
     }
   }
+  
+  const handleStartReviewQuiz = useCallback(async () => {
+    if (!roadmap?.completedConcepts || roadmap.completedConcepts.length === 0) return;
+
+    setReviewQuizState('loading');
+    setReviewQuizAnswers({});
+    setReviewQuizScore(null);
+    setReviewQuizData([]);
+
+    try {
+      const result = await generateReviewQuiz({ topics: roadmap.completedConcepts });
+      setReviewQuizData(result.quiz);
+      setReviewQuizState('ready');
+    } catch (err) {
+      console.error(err);
+      setReviewQuizState('error');
+    }
+  }, [roadmap?.completedConcepts]);
+
+  const handleSubmitReviewQuiz = () => {
+    let score = 0;
+    reviewQuizData.forEach((q, index) => {
+      if (reviewQuizAnswers[index] === q.correctAnswer) {
+        score++;
+      }
+    });
+    setReviewQuizScore(score);
+    setReviewQuizState('submitted');
+  };
+
+  const calculateProgress = (roadmap: Roadmap) => {
+    if (!Array.isArray(roadmap.roadmap)) return 0;
+    const totalConcepts = roadmap.roadmap?.flatMap(module => module.concepts || []).length || 0;
+    if (totalConcepts === 0) return 0;
+    const completedConcepts = roadmap.completedConcepts?.length || 0;
+    return Math.round((completedConcepts / totalConcepts) * 100);
+  }
 
   const ConceptQuiz = ({concept}: {concept: string}) => {
-    // This state is local to the review quiz modal, separate from the concept quiz
-    const [reviewQuizData, setReviewQuizData] = useState<QuizAndExplanationOutput | null>(null);
-    const [reviewQuizState, setReviewQuizState] = useState<QuizState>('idle');
-    const [reviewSelectedAnswer, setReviewSelectedAnswer] = useState<string | null>(null);
-    const [reviewIsCorrect, setReviewIsCorrect] = useState<boolean | null>(null);
-    const [reviewFeedback, setReviewFeedback] = useState<string | null>(null);
-
     if (activeConcept && activeConcept === quizConceptKey) {
         // This is for the inline concept quiz
         return (
-          <div className="mt-4 p-4 border-t-2 border-primary/20">
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+          >
             {(quizState === 'loading' && !quizData) && (
               <div className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin"/>
@@ -261,26 +309,40 @@ export default function RoadmapDetailPage() {
     
             {quizData && (quizState === 'ready' || quizState === 'answered' || (quizState === 'loading' && !!quizData)) && (
                 <div className="space-y-4">
-                    <p className="font-semibold">{quizData.question}</p>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">{quizData.question}</p>
                     <RadioGroup
                       value={selectedAnswer ?? ''}
                       onValueChange={setSelectedAnswer}
                       disabled={quizState === 'answered' || quizState === 'loading'}
+                      className="space-y-2"
                     >
                       {quizData.options.map((option, index) => (
-                         <Label key={index} htmlFor={`quiz-${index}`} className={`flex items-center gap-3 p-3 rounded-md border transition-all cursor-pointer ${
-                              quizState === 'answered' && option === quizData.correctAnswer ? 'border-green-500 bg-green-500/10' : ''
-                            } ${
-                              quizState === 'answered' && option === selectedAnswer && !isCorrect ? 'border-destructive bg-destructive/10' : ''
-                            }`}>
-                              <RadioGroupItem value={option} id={`quiz-${index}`} disabled={quizState === 'answered' || quizState === 'loading'} />
-                              <span>{option}</span>
-                          </Label>
+                         <Label 
+                           key={index} 
+                           htmlFor={`quiz-${index}`} 
+                           className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                             quizState === 'answered' && option === quizData.correctAnswer 
+                               ? 'border-green-500 bg-green-500/10 text-green-900 dark:text-green-100' 
+                               : ''
+                           } ${
+                             quizState === 'answered' && option === selectedAnswer && !isCorrect 
+                               ? 'border-red-500 bg-red-500/10 text-red-900 dark:text-red-100' 
+                               : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                           }`}
+                         >
+                            <RadioGroupItem 
+                              value={option} 
+                              id={`quiz-${index}`} 
+                              disabled={quizState === 'answered' || quizState === 'loading'} 
+                              className="text-blue-600"
+                            />
+                            <span>{option}</span>
+                         </Label>
                       ))}
                     </RadioGroup>
     
                     {quizState === 'answered' && isCorrect !== null && (
-                       <Alert variant={isCorrect ? "default" : "destructive"} className={isCorrect ? "border-green-500 text-green-700" : ""}>
+                       <Alert variant={isCorrect ? "default" : "destructive"} className={isCorrect ? "border-green-500 bg-green-500/10 text-green-900 dark:text-green-100" : ""}>
                         {isCorrect ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                         <AlertTitle>{isCorrect ? 'Correct!' : 'Not quite!'}</AlertTitle>
                         <AlertDescription>
@@ -290,10 +352,10 @@ export default function RoadmapDetailPage() {
                     )}
     
                     {quizFeedback && (
-                      <Alert className="mt-4 animate-in fade-in-50">
-                        <Lightbulb className="h-4 w-4" />
-                        <AlertTitle>Explanation</AlertTitle>
-                        <AlertDescription className="whitespace-pre-wrap">{quizFeedback}</AlertDescription>
+                      <Alert className="mt-4 animate-in fade-in-50 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+                        <Lightbulb className="h-4 w-4 text-blue-600" />
+                        <AlertTitle className="text-blue-900 dark:text-blue-100">Explanation</AlertTitle>
+                        <AlertDescription className="text-blue-800 dark:text-blue-200 whitespace-pre-wrap">{quizFeedback}</AlertDescription>
                       </Alert>
                     )}
     
@@ -304,32 +366,136 @@ export default function RoadmapDetailPage() {
                       </div>
                     )}
     
-                    {quizState === 'ready' && <Button onClick={handleQuizSubmit} disabled={!selectedAnswer}>Submit Answer</Button>}
-                    {quizState === 'answered' && <Button onClick={() => handleStartQuiz(concept)}>Try another question</Button>}
+                    {quizState === 'ready' && (
+                      <Button 
+                        onClick={handleQuizSubmit} 
+                        disabled={!selectedAnswer}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md"
+                      >
+                        Submit Answer
+                      </Button>
+                    )}
+                    {quizState === 'answered' && (
+                      <Button 
+                        onClick={() => handleStartQuiz(concept)}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md"
+                      >
+                        Try another question
+                      </Button>
+                    )}
                 </div>
             )}
-          </div>
+          </motion.div>
         );
     }
     
      return (
-        <div className="mt-4 p-4 border-t-2 border-primary/20 flex gap-4">
-            <Button onClick={() => handleStartQuiz(concept)}>
-                <HelpCircle className="mr-2"/> Test Your Knowledge
+        <div className="mt-4 flex gap-4">
+            <Button 
+              onClick={() => handleStartQuiz(concept)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md"
+            >
+                <HelpCircle className="mr-2 h-4 w-4"/> Test Your Knowledge
             </Button>
         </div>
     );
   }
 
+  const ReviewQuizDialog = () => (
+    <Dialog open={isReviewQuizOpen} onOpenChange={setIsReviewQuizOpen}>
+      <DialogContent className="max-w-3xl bg-white dark:bg-gray-800 border-0 rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-gray-900 dark:text-gray-100 text-2xl font-headline flex items-center gap-3">
+             <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+              <BrainCircuit className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            Review Quiz
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-400">
+            Test your knowledge on the concepts you've completed.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[60vh] overflow-y-auto p-1 pr-4 custom-scrollbar">
+          <AnimatePresence mode="wait">
+            {reviewQuizState === 'loading' && (
+              <motion.div key="loading" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="flex flex-col items-center justify-center gap-4 py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                <p className="text-muted-foreground">Generating your review quiz...</p>
+              </motion.div>
+            )}
+
+            {reviewQuizState === 'error' && (
+              <motion.div key="error" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="flex flex-col items-center justify-center gap-4 py-20">
+                <AlertTriangle className="h-8 w-8 text-destructive" />
+                <p className="text-destructive">Failed to generate quiz.</p>
+                <Button onClick={handleStartReviewQuiz}><RefreshCw className="mr-2 h-4 w-4" /> Try Again</Button>
+              </motion.div>
+            )}
+
+            {reviewQuizState === 'ready' && (
+              <motion.div key="ready" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="space-y-6">
+                {reviewQuizData.map((item, index) => (
+                  <div key={index} className="space-y-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">{index + 1}. {item.question}</p>
+                    <RadioGroup
+                      value={reviewQuizAnswers[index] || ''}
+                      onValueChange={(value) => setReviewQuizAnswers(prev => ({...prev, [index]: value}))}
+                      className="space-y-2"
+                    >
+                      {item.options.map((option, i) => (
+                        <Label key={i} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 cursor-pointer transition-colors">
+                          <RadioGroupItem value={option} id={`review-q${index}-o${i}`} className="text-purple-600" />
+                          <span>{option}</span>
+                        </Label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                ))}
+                 <div className="flex justify-end pt-4">
+                    <Button 
+                        onClick={handleSubmitReviewQuiz} 
+                        disabled={Object.keys(reviewQuizAnswers).length !== reviewQuizData.length}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-md"
+                    >
+                        Submit Quiz
+                    </Button>
+                 </div>
+              </motion.div>
+            )}
+            
+            {reviewQuizState === 'submitted' && reviewQuizScore !== null && (
+                <motion.div key="submitted" initial={{opacity: 0, scale: 0.9}} animate={{opacity: 1, scale: 1}} exit={{opacity: 0}} className="text-center py-10">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Quiz Complete!</h2>
+                    <p className="text-5xl font-bold my-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                        {Math.round((reviewQuizScore / reviewQuizData.length) * 100)}%
+                    </p>
+                    <p className="text-muted-foreground">You scored {reviewQuizScore} out of {reviewQuizData.length}.</p>
+                    <div className="mt-8 flex justify-center gap-4">
+                        <Button variant="outline" onClick={() => { setReviewQuizState('ready'); setReviewQuizScore(null); setReviewQuizAnswers({}); }}>Review Answers</Button>
+                        <Button onClick={handleStartReviewQuiz} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-md">
+                            <RefreshCw className="mr-2 h-4 w-4"/>
+                            Take Again
+                        </Button>
+                    </div>
+                </motion.div>
+            )}
+
+          </AnimatePresence>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   if (isLoadingPage) {
      return (
-        <div className="space-y-4">
-            <Skeleton className="h-9 w-1/3" />
-            <Skeleton className="h-5 w-1/2" />
+        <div className="space-y-4 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen">
+            <Skeleton className="h-9 w-1/3 rounded-lg" />
+            <Skeleton className="h-5 w-1/2 rounded-lg" />
             <div className="mt-8 space-y-4">
-                <Skeleton className="h-48 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-48 w-full rounded-xl" />
+                <Skeleton className="h-24 w-full rounded-xl" />
+                <Skeleton className="h-24 w-full rounded-xl" />
             </div>
         </div>
      );
@@ -337,14 +503,19 @@ export default function RoadmapDetailPage() {
   
   if (error) {
      return (
-         <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle/> Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{error}</p>
-          </CardContent>
-        </Card>
+        <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden border-l-4 border-l-destructive">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5"/> 
+                Error
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-900 dark:text-gray-100">{error}</p>
+            </CardContent>
+          </Card>
+        </div>
       );
   }
 
@@ -353,158 +524,295 @@ export default function RoadmapDetailPage() {
   }
   
   const completedConcepts = roadmap.completedConcepts || [];
+  const progress = calculateProgress(roadmap);
+  const totalConcepts = roadmap.roadmap?.flatMap(module => module.concepts || []).length || 0;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex justify-between items-start">
+    <div className="flex flex-col gap-8 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen">
+      <ReviewQuizDialog />
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.4 }}
+        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+      >
         <div>
-            <h1 className="text-3xl font-bold font-headline flex items-center gap-3">
-                <Map className="h-8 w-8 text-primary"/>
-                {roadmap.goals}
-            </h1>
-            <p className="text-muted-foreground">
-                Created on: {roadmap.createdAt?.toDate().toLocaleDateString()}
-            </p>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+            {roadmap.goals}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Created on: {roadmap.createdAt?.toDate().toLocaleDateString()}
+          </p>
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive">
+            <Button variant="destructive" className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-md">
               <Trash2 className="mr-2 h-4 w-4" /> Delete Roadmap
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className="bg-white dark:bg-gray-800 border-0 rounded-xl">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-gray-900 dark:text-gray-100">Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-600 dark:text-gray-400">
                 This action cannot be undone. This will permanently delete your roadmap and all its associated data.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteRoadmap}>Delete</AlertDialogAction>
+              <AlertDialogCancel className="border-gray-300 bg-white hover:bg-gray-50 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-600">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteRoadmap}
+                className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white"
+              >
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </motion.div>
+
+      {/* Progress Overview */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden">
+          <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              Progress Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Progress</span>
+                <span className="text-sm font-bold text-blue-600">{progress}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium">Total Concepts</span>
+                </div>
+                <p className="text-2xl font-bold mt-1">{totalConcepts}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium">Completed</span>
+                </div>
+                <p className="text-2xl font-bold mt-1">{completedConcepts.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-8">
-            <Card>
-                <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><BookOpen className="text-primary"/> Learning Modules</CardTitle>
-                <CardDescription>
-                    Click a concept to get an explanation. Mark concepts as complete as you master them.
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden">
+              <div className="h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+                    <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  Learning Modules
+                </CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-400">
+                  Click a concept to get an explanation. Mark concepts as complete as you master them.
                 </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Accordion type="single" collapsible className="w-full">
-                        {Array.isArray(roadmap.roadmap) && roadmap.roadmap.map((item, index) => (
-                        <AccordionItem value={`item-${index}`} key={index}>
-                            <AccordionTrigger className="text-lg font-semibold">{item.title}</AccordionTrigger>
-                            <AccordionContent>
-                                <Accordion type="single" collapsible className="w-full pl-4">
-                                {Array.isArray(item.concepts) && item.concepts.map((concept, conceptIndex) => {
-                                    const isCompleted = completedConcepts.includes(concept);
-                                    const conceptKey = `${roadmap.id}-${concept}`;
+              </CardHeader>
+              <CardContent>
+                <Accordion type="single" collapsible className="w-full">
+                  {Array.isArray(roadmap.roadmap) && roadmap.roadmap.map((item, index) => (
+                    <AccordionItem value={`item-${index}`} key={index} className="border-b border-gray-200 dark:border-gray-700">
+                      <AccordionTrigger className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:no-underline py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+                            <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                          </div>
+                          {item.title}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pt-4">
+                        <Accordion type="single" collapsible className="w-full pl-4">
+                          {Array.isArray(item.concepts) && item.concepts.map((concept, conceptIndex) => {
+                            const isCompleted = completedConcepts.includes(concept);
+                            const conceptKey = `${roadmap.id}-${concept}`;
 
-                                    return (
-                                    <AccordionItem value={`concept-${conceptIndex}`} key={conceptIndex}>
-                                        <div className="flex items-center gap-2">
-                                            <AccordionTrigger 
-                                                className="text-base flex-1"
-                                                onClick={() => handleConceptClick(concept, roadmap)}
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                     {isCompleted && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-                                                    <span>{concept}</span>
-                                                </div>
-                                            </AccordionTrigger>
-                                            <Button
-                                              variant={isCompleted ? "secondary" : "outline"}
-                                              size="sm"
-                                              onClick={() => handleToggleComplete(concept, isCompleted)}
-                                              title={isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
-                                            >
-                                                <CheckSquare className="mr-2"/>
-                                                {isCompleted ? "Completed" : "Complete"}
-                                            </Button>
+                            return (
+                              <AccordionItem value={`concept-${conceptIndex}`} key={conceptIndex} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+                                <div className="flex items-center gap-2 py-3">
+                                  <AccordionTrigger 
+                                    className="text-base flex-1 hover:no-underline py-0"
+                                    onClick={() => handleConceptClick(concept, roadmap)}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {isCompleted ? (
+                                        <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                                      ) : (
+                                        <div className="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                                      )}
+                                      <span className="text-gray-900 dark:text-gray-100">{concept}</span>
+                                    </div>
+                                  </AccordionTrigger>
+                                  <Button
+                                    variant={isCompleted ? "secondary" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleToggleComplete(concept, isCompleted)}
+                                    title={isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
+                                    className={isCompleted ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50" : "border-gray-300"}
+                                  >
+                                    <CheckSquare className="mr-2 h-3 w-3"/>
+                                    {isCompleted ? "Completed" : "Complete"}
+                                  </Button>
+                                </div>
+                                <AccordionContent className="pl-7">
+                                  {activeConcept === conceptKey && (
+                                    <motion.div 
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 mt-2"
+                                    >
+                                      {isLoadingExplanation && (
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                          <Loader2 className="h-4 w-4 animate-spin"/>
+                                          <span>Generating explanation...</span>
                                         </div>
-                                        <AccordionContent>
-                                            {activeConcept === conceptKey && (
-                                                <div className="p-4 border-l-2 border-primary bg-primary/5">
-                                                    {isLoadingExplanation && (
-                                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                                            <Loader2 className="h-4 w-4 animate-spin"/>
-                                                            <span>Generating explanation...</span>
-                                                        </div>
-                                                    )}
-                                                    {explanation && (
-                                                        <>
-                                                        <div className="prose prose-sm dark:prose-invert max-w-none"
-                                                            dangerouslySetInnerHTML={{ __html: markdownToHtml(explanation.explanation) }}
-                                                        />
-                                                        <ConceptQuiz concept={concept}/>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                    )
-                                })}
-                                </Accordion>
-                            </AccordionContent>
-                        </AccordionItem>
-                        ))}
-                    </Accordion>
-                </CardContent>
+                                      )}
+                                      {explanation && (
+                                        <>
+                                          <div className="prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100"
+                                            dangerouslySetInnerHTML={{ __html: markdownToHtml(explanation.explanation) }}
+                                          />
+                                          <ConceptQuiz concept={concept}/>
+                                        </>
+                                      )}
+                                    </motion.div>
+                                  )}
+                                </AccordionContent>
+                              </AccordionItem>
+                            )
+                          })}
+                        </Accordion>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
             </Card>
+          </motion.div>
         </div>
 
         <div className="lg:col-span-1 space-y-8 sticky top-20">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><BrainCircuit className="text-primary"/> Review Quiz</CardTitle>
-                    <CardDescription>Test your knowledge on all completed concepts.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button className="w-full" disabled={completedConcepts.length === 0} onClick={() => alert("Review quiz coming soon!")}>
-                        Start Review Quiz
-                    </Button>
-                    {completedConcepts.length === 0 && <p className="text-xs text-muted-foreground mt-2 text-center">Complete some lessons to unlock the review quiz.</p>}
-                </CardContent>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden">
+              <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                    <BrainCircuit className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  Review Quiz
+                </CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-400">
+                  Test your knowledge on all completed concepts.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-md"
+                  disabled={completedConcepts.length === 0} 
+                  onClick={() => {
+                      setIsReviewQuizOpen(true);
+                      handleStartReviewQuiz();
+                  }}
+                >
+                  Start Review Quiz
+                </Button>
+                {completedConcepts.length === 0 && (
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    Complete some lessons to unlock the review quiz.
+                  </p>
+                )}
+              </CardContent>
             </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Bookmark className="text-primary"/> Related Resources</CardTitle>
-                    <CardDescription>External resources to supplement your learning.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {isLoadingResources && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                           <Loader2 className="h-4 w-4 animate-spin"/>
-                           <span>Finding resources...</span>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden">
+              <div className="h-2 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                    <Bookmark className="h-5 w-5 text-amber-600 dark:bg-amber-400" />
+                  </div>
+                  Related Resources
+                </CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-400">
+                  External resources to supplement your learning.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {isLoadingResources && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin"/>
+                    <span>Finding resources...</span>
+                  </div>
+                )}
+                {resources && resources.length > 0 ? (
+                  resources.map((resource, index) => (
+                    <motion.a 
+                      key={index}
+                      href={resource.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {resource.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {resource.description}
+                          </p>
                         </div>
-                    )}
-                    {resources && resources.length > 0 ? (
-                        <div className="space-y-3">
-                        {resources.map((resource, index) => (
-                           <a href={resource.url} target="_blank" rel="noopener noreferrer" key={index} className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-semibold text-sm">{resource.title}</p>
-                                        <p className="text-xs text-muted-foreground">{resource.description}</p>
-                                    </div>
-                                    <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0 ml-2 mt-1"/>
-                                </div>
-                            </a>
-                        ))}
-                        </div>
-                    ) : !isLoadingResources && (
-                        <p className="text-sm text-muted-foreground">No resources found.</p>
-                    )}
-                </CardContent>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0 ml-2 mt-1 group-hover:text-blue-600 transition-colors"/>
+                      </div>
+                    </motion.a>
+                  ))
+                ) : !isLoadingResources && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No resources found.</p>
+                )}
+              </CardContent>
             </Card>
+          </motion.div>
         </div>
      </div>
     </div>
