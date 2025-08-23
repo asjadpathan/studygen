@@ -56,6 +56,7 @@ export default function RoadmapListPage() {
   }, []);
 
   const calculateProgress = (roadmap: Roadmap) => {
+    if (!Array.isArray(roadmap.roadmap)) return 0;
     const totalConcepts = roadmap.roadmap?.flatMap(module => module.concepts || []).length || 0;
     if (totalConcepts === 0) return 0;
     const completedConcepts = roadmap.completedConcepts?.length || 0;
