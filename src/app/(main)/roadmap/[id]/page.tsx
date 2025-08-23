@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Map, Loader2, BookOpen, HelpCircle, CheckCircle2, XCircle, Lightbulb, AlertTriangle, ExternalLink, Bookmark, CheckSquare, BrainCircuit } from 'lucide-react';
+import { Map, Loader2, BookOpen, HelpCircle, CheckCircle2, XCircle, Lightbulb, AlertTriangle, ExternalLink, Bookmark, CheckSquare, BrainCircuit, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getConceptExplanation, GetConceptExplanationOutput } from '@/ai/flows/get-concept-explanation';
 import { generateQuizAndExplanation, QuizAndExplanationOutput } from '@/ai/flows/active-feedback';
@@ -16,6 +16,17 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { searchTopic, SearchTopicOutput } from '@/ai/flows/search-topic';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface Roadmap {
   id: string;
@@ -52,6 +63,7 @@ function markdownToHtml(markdown: string) {
 export default function RoadmapDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  const router = useRouter();
   const { toast } = useToast();
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
@@ -211,6 +223,22 @@ export default function RoadmapDetailPage() {
       }
     }
   };
+  
+  const handleDeleteRoadmap = async () => {
+    if (!roadmap) return;
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    const docRef = doc(db, 'users', user.uid, 'roadmaps', roadmap.id);
+    try {
+        await deleteDoc(docRef);
+        toast({ title: "Roadmap Deleted", description: "The roadmap has been successfully removed."});
+        router.push('/roadmap');
+    } catch (err) {
+        console.error("Failed to delete roadmap", err);
+        toast({ title: "Error", description: "Could not delete the roadmap.", variant: "destructive"});
+    }
+  }
 
   const ConceptQuiz = ({concept}: {concept: string}) => {
     // This state is local to the review quiz modal, separate from the concept quiz
@@ -328,14 +356,35 @@ export default function RoadmapDetailPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-3xl font-bold font-headline flex items-center gap-3">
-            <Map className="h-8 w-8 text-primary"/>
-            {roadmap.goals}
-        </h1>
-        <p className="text-muted-foreground">
-            Created on: {roadmap.createdAt?.toDate().toLocaleDateString()}
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+            <h1 className="text-3xl font-bold font-headline flex items-center gap-3">
+                <Map className="h-8 w-8 text-primary"/>
+                {roadmap.goals}
+            </h1>
+            <p className="text-muted-foreground">
+                Created on: {roadmap.createdAt?.toDate().toLocaleDateString()}
+            </p>
+        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">
+              <Trash2 className="mr-2 h-4 w-4" /> Delete Roadmap
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete your roadmap and all its associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteRoadmap}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
