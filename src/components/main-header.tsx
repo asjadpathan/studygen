@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CircleUser, Menu, Search, GraduationCap, LayoutDashboard, ClipboardCheck, GitMerge, BrainCircuit, Upload } from "lucide-react";
+import { CircleUser, Menu, Search, GraduationCap, LayoutDashboard, ClipboardCheck, GitMerge, BrainCircuit, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useEffect, useState } from "react";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -28,6 +31,16 @@ const menuItems = [
 export function MainHeader() {
   const router = useRouter();
   const pathname = usePathname();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,6 +49,11 @@ export function MainHeader() {
     if (query) {
       router.push(`/search?q=${encodeURIComponent(query)}`);
     }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/');
   };
 
   return (
@@ -108,6 +126,9 @@ export function MainHeader() {
             />
           </div>
         </form>
+         {loading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
@@ -121,9 +142,10 @@ export function MainHeader() {
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link href="/">Logout</Link></DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+         )}
       </div>
     </header>
   );

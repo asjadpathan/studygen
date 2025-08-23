@@ -22,11 +22,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -40,6 +40,18 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push('/dashboard');
+      } else {
+        setIsCheckingAuth(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,21 +85,29 @@ export default function SignupPage() {
         });
       }
 
-
       toast({
         title: 'Account Created',
         description: "You're now logged in and being redirected to your dashboard.",
       });
-      router.push('/dashboard');
+
+      // The useEffect will handle the redirect
+
     } catch (error: any) {
       toast({
         title: 'Sign-up Failed',
         description: error.message,
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
+       setIsLoading(false);
     }
+  }
+  
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (

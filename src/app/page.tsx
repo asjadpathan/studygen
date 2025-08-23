@@ -23,11 +23,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { auth, db } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -41,6 +41,19 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push('/dashboard');
+      } else {
+        setIsCheckingAuth(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -72,17 +85,25 @@ export default function LoginPage() {
           timeStudied: 0,
         });
       }
-
-      router.push('/dashboard');
+      
+      // The useEffect will handle the redirect
+      
     } catch (error: any) {
       toast({
         title: 'Login Failed',
         description: 'Invalid email or password. Please try again.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
-    }
+    } 
+  }
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
