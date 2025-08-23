@@ -31,7 +31,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { generateReviewQuiz, ReviewQuizOutput } from '@/ai/flows/review-quiz';
+import { generateReviewQuiz } from '@/ai/flows/review-quiz';
+import type { ReviewQuizOutput } from '@/ai/schemas/review-quiz';
+
 
 interface Roadmap {
   id: string;
@@ -44,7 +46,7 @@ interface Roadmap {
     title: string;
     concepts: string[];
   }[];
-  completedConcepts?: string[];
+  completedConcepts?: { name: string; completedAt: any }[];
 }
 
 type QuizState = 'idle' | 'loading' | 'ready' | 'answered';
@@ -172,7 +174,7 @@ export default function RoadmapDetailPage() {
     return () => unsubscribe();
   }, [id, resources, isLoadingResources]);
 
-  const handleToggleComplete = async (concept: string, isCompleted: boolean) => {
+  const handleToggleComplete = async (conceptName: string, isCompleted: boolean) => {
     if (!roadmap) return;
     const user = auth.currentUser;
     if (!user) return;
@@ -180,13 +182,17 @@ export default function RoadmapDetailPage() {
     const docRef = doc(db, 'users', user.uid, 'roadmaps', roadmap.id);
     try {
       if (isCompleted) {
-        await updateDoc(docRef, {
-          completedConcepts: arrayRemove(concept)
-        });
-         toast({ title: "Concept marked as incomplete."});
+        // To remove, we need to find the specific object to remove.
+        const conceptToRemove = roadmap.completedConcepts?.find(c => c.name === conceptName);
+        if (conceptToRemove) {
+          await updateDoc(docRef, {
+            completedConcepts: arrayRemove(conceptToRemove)
+          });
+          toast({ title: "Concept marked as incomplete."});
+        }
       } else {
         await updateDoc(docRef, {
-          completedConcepts: arrayUnion(concept)
+          completedConcepts: arrayUnion({ name: conceptName, completedAt: new Date() })
         });
          toast({ title: "Concept marked as complete!", description: "Great progress!"});
       }
@@ -255,7 +261,8 @@ export default function RoadmapDetailPage() {
   }
   
   const handleStartReviewQuiz = useCallback(async () => {
-    if (!roadmap?.completedConcepts || roadmap.completedConcepts.length === 0) return;
+    const completedConceptNames = roadmap?.completedConcepts?.map(c => c.name) || [];
+    if (completedConceptNames.length === 0) return;
 
     setReviewQuizState('loading');
     setReviewQuizAnswers({});
@@ -263,7 +270,7 @@ export default function RoadmapDetailPage() {
     setReviewQuizData([]);
 
     try {
-      const result = await generateReviewQuiz({ topics: roadmap.completedConcepts });
+      const result = await generateReviewQuiz({ topics: completedConceptNames });
       setReviewQuizData(result.quiz);
       setReviewQuizState('ready');
     } catch (err) {
@@ -523,7 +530,7 @@ export default function RoadmapDetailPage() {
     return null; // or a not found component
   }
   
-  const completedConcepts = roadmap.completedConcepts || [];
+  const completedConceptNames = roadmap.completedConcepts?.map(c => c.name) || [];
   const progress = calculateProgress(roadmap);
   const totalConcepts = roadmap.roadmap?.flatMap(module => module.concepts || []).length || 0;
 
@@ -609,7 +616,7 @@ export default function RoadmapDetailPage() {
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   <span className="text-sm font-medium">Completed</span>
                 </div>
-                <p className="text-2xl font-bold mt-1">{completedConcepts.length}</p>
+                <p className="text-2xl font-bold mt-1">{completedConceptNames.length}</p>
               </div>
             </div>
           </CardContent>
@@ -651,7 +658,7 @@ export default function RoadmapDetailPage() {
                       <AccordionContent className="pt-4">
                         <Accordion type="single" collapsible className="w-full pl-4">
                           {Array.isArray(item.concepts) && item.concepts.map((concept, conceptIndex) => {
-                            const isCompleted = completedConcepts.includes(concept);
+                            const isCompleted = completedConceptNames.includes(concept);
                             const conceptKey = `${roadmap.id}-${concept}`;
 
                             return (
@@ -740,7 +747,7 @@ export default function RoadmapDetailPage() {
               <CardContent>
                 <Button 
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-md"
-                  disabled={completedConcepts.length === 0} 
+                  disabled={completedConceptNames.length === 0} 
                   onClick={() => {
                       setIsReviewQuizOpen(true);
                       handleStartReviewQuiz();
@@ -748,7 +755,7 @@ export default function RoadmapDetailPage() {
                 >
                   Start Review Quiz
                 </Button>
-                {completedConcepts.length === 0 && (
+                {completedConceptNames.length === 0 && (
                   <p className="text-xs text-muted-foreground mt-2 text-center">
                     Complete some lessons to unlock the review quiz.
                   </p>
