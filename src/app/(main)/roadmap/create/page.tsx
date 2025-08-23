@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,28 +13,30 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, AlertTriangle, Map, HelpCircle, Bot } from 'lucide-react';
+import { Loader2, AlertTriangle, Map, HelpCircle, Bot, Sparkles, ArrowLeft } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { motion } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
 
 
 const learningStyles = [
-  { id: 'visual', label: 'Visual' },
-  { id: 'auditory', label: 'Auditory' },
-  { id: 'kinesthetic', label: 'Kinesthetic (Hands-on)' },
-  { id: 'reading_writing', label: 'Reading/Writing' },
+  { id: 'visual', label: 'Visual', color: 'from-blue-500 to-cyan-500' },
+  { id: 'auditory', label: 'Auditory', color: 'from-purple-500 to-pink-500' },
+  { id: 'kinesthetic', label: 'Kinesthetic (Hands-on)', color: 'from-orange-500 to-red-500' },
+  { id: 'reading_writing', label: 'Reading/Writing', color: 'from-green-500 to-emerald-500' },
 ];
 
 const resourceTypes = [
-  { id: 'videos', label: 'Videos' },
-  { id: 'articles', label: 'Articles' },
-  { id: 'interactive_labs', label: 'Interactive Labs' },
-  { id: 'books', label: 'Books' },
-  { id: 'projects', label: 'Projects' },
+  { id: 'videos', label: 'Videos', icon: '🎬' },
+  { id: 'articles', label: 'Articles', icon: '📝' },
+  { id: 'interactive_labs', label: 'Interactive Labs', icon: '🔬' },
+  { id: 'books', label: 'Books', icon: '📚' },
+  { id: 'projects', label: 'Projects', icon: '🚀' },
 ];
 
 const formSchema = z.object({
@@ -140,8 +143,8 @@ export default function CreateRoadmapPage() {
       });
       
       toast({
-        title: "Roadmap Saved",
-        description: "Your new roadmap has been saved to your profile.",
+        title: "Roadmap Created!",
+        description: "Your personalized learning roadmap has been saved.",
       });
 
       router.push(`/roadmap/${roadmapRef.id}`);
@@ -155,10 +158,21 @@ export default function CreateRoadmapPage() {
   }
 
   const renderInitialStep = () => (
-     <Card className="max-w-2xl mx-auto w-full">
-        <CardHeader>
-          <CardTitle className="font-headline">Create a New Roadmap</CardTitle>
-          <CardDescription>Tell us about your learning journey, and we&apos;ll create a plan for you.</CardDescription>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-2xl mx-auto w-full"
+    >
+      <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden">
+        <div className="h-2 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+        <CardHeader className="pb-3">
+          <CardTitle className="font-headline text-2xl flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-indigo-600" />
+            Create a New Roadmap
+          </CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-400">
+            Tell us about your learning journey, and we'll create a personalized plan for you.
+          </CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onInitialSubmit)}>
@@ -168,9 +182,13 @@ export default function CreateRoadmapPage() {
                 name="goals"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Learning Goals</FormLabel>
+                    <FormLabel className="text-gray-900 dark:text-gray-100">Learning Goals</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Pass the AP Calculus Exam" {...field} />
+                      <Input 
+                        placeholder="e.g., Pass the AP Calculus Exam" 
+                        {...field} 
+                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -181,9 +199,13 @@ export default function CreateRoadmapPage() {
                 name="expertise"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Current Expertise</FormLabel>
+                    <FormLabel className="text-gray-900 dark:text-gray-100">Current Expertise</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., Some experience with Calculus, basic understanding of derivatives." {...field} />
+                      <Textarea 
+                        placeholder="e.g., Some experience with Calculus, basic understanding of derivatives." 
+                        {...field} 
+                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 min-h-[100px]"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,56 +216,57 @@ export default function CreateRoadmapPage() {
                 name="availableStudyTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Available Study Time</FormLabel>
+                    <FormLabel className="text-gray-900 dark:text-gray-100">Available Study Time</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 5 hours a week for 3 months" {...field} />
+                      <Input 
+                        placeholder="e.g., 5 hours a week for 3 months" 
+                        {...field} 
+                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-               <FormField
+              <FormField
                 control={form.control}
                 name="learningStyle"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preferred Learning Style(s)</FormLabel>
-                     <FormDescription>Select one or more styles that work best for you.</FormDescription>
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      {learningStyles.map((item) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="learningStyle"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={item.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(item.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...(field.value || []), item.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== item.id
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {item.label}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
+                    <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Learning Style(s)</FormLabel>
+                    <FormDescription className="text-gray-600 dark:text-gray-400">
+                      Select one or more styles that work best for you.
+                    </FormDescription>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      {learningStyles.map((item) => {
+                        const isSelected = field.value?.includes(item.id);
+                        return (
+                          <div 
+                            key={item.id}
+                            className={`rounded-xl p-4 border-2 cursor-pointer transition-all ${isSelected 
+                              ? `border-transparent bg-gradient-to-r ${item.color} text-white shadow-md` 
+                              : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-gray-700'}`}
+                            onClick={() => {
+                              const newValue = isSelected
+                                ? field.value?.filter((value) => value !== item.id)
+                                : [...(field.value || []), item.id];
+                              field.onChange(newValue);
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                checked={isSelected}
+                                className={`${isSelected ? 'border-white bg-white/20' : ''}`}
+                                readOnly
+                              />
+                              <Label className="font-normal cursor-pointer text-current">
+                                {item.label}
+                              </Label>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -253,59 +276,58 @@ export default function CreateRoadmapPage() {
               <FormField
                 control={form.control}
                 name="preferredResourceTypes"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preferred Resource Types</FormLabel>
-                    <FormDescription>What kind of materials do you prefer?</FormDescription>
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      {resourceTypes.map((item) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="preferredResourceTypes"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={item.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(item.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...(field.value || []), item.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== item.id
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
+                    <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Resource Types</FormLabel>
+                    <FormDescription className="text-gray-600 dark:text-gray-400">
+                      What kind of materials do you prefer?
+                    </FormDescription>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      {resourceTypes.map((item) => {
+                        const isSelected = field.value?.includes(item.id);
+                        return (
+                           <div 
+                              key={item.id}
+                              className={`rounded-xl p-4 border-2 cursor-pointer transition-all ${isSelected 
+                                ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 shadow-sm' 
+                                : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-gray-700'}`}
+                              onClick={() => {
+                                 const newValue = isSelected
+                                  ? field.value?.filter((value) => value !== item.id)
+                                  : [...(field.value || []), item.id];
+                                field.onChange(newValue);
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="text-lg">{item.icon}</span>
+                                <Label className="font-normal cursor-pointer text-current">
                                   {item.label}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
+                                </Label>
+                              </div>
+                            </div>
+                        );
+                      })}
                     </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-               <FormField
+              <FormField
                 control={form.control}
                 name="specificTopics"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Specific Topics to Include/Exclude</FormLabel>
-                     <FormDescription>Are there any topics you definitely want to focus on or skip? (Optional)</FormDescription>
+                    <FormLabel className="text-gray-900 dark:text-gray-100">Specific Topics to Include/Exclude</FormLabel>
+                    <FormDescription className="text-gray-600 dark:text-gray-400">
+                      Are there any topics you definitely want to focus on or skip? (Optional)
+                    </FormDescription>
                     <FormControl>
-                      <Textarea placeholder="e.g., Focus on integration techniques, skip related rates." {...field} />
+                      <Textarea 
+                        placeholder="e.g., Focus on integration techniques, skip related rates." 
+                        {...field} 
+                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -314,7 +336,12 @@ export default function CreateRoadmapPage() {
 
             </CardContent>
             <CardFooter>
-              <Button type="submit" disabled={isLoading} className="w-full">
+              <Button 
+                type="submit" 
+                disabled={isLoading} 
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md"
+                size="lg"
+              >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Start Assessment
               </Button>
@@ -322,67 +349,130 @@ export default function CreateRoadmapPage() {
           </form>
         </Form>
       </Card>
+    </motion.div>
   );
 
   const renderQuizStep = () => (
-    <Card className="max-w-2xl mx-auto w-full">
-        <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><Bot /> Quick Assessment</CardTitle>
-            <CardDescription>Answer these questions to help us tailor your roadmap.</CardDescription>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-2xl mx-auto w-full"
+    >
+      <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden">
+        <div className="h-2 bg-gradient-to-r from-purple-600 to-pink-600"></div>
+        <CardHeader className="pb-3">
+          <CardTitle className="font-headline text-2xl flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+              <Bot className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            Quick Assessment
+          </CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-400">
+            Answer these questions to help us tailor your roadmap.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-            {isLoading ? (
-                 <div className="flex justify-center items-center py-16">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                 </div>
-            ) : (
-              quizQuestions.map((q, i) => (
-                <div key={i} className="space-y-4">
-                    <p className="font-semibold flex items-start gap-2"><HelpCircle className="h-5 w-5 mt-0.5 text-primary shrink-0"/>{q.question}</p>
-                    <RadioGroup 
-                        onValueChange={(value) => handleQuizAnswerChange(q.question, value)}
-                        value={quizAnswers[q.question]}
-                        className="pl-7 space-y-2"
-                    >
-                        {q.options.map((option, j) => (
-                            <div key={j} className="flex items-center space-x-3 space-y-0">
-                                <RadioGroupItem value={option} id={`q${i}-option${j}`} />
-                                <Label htmlFor={`q${i}-option${j}`} className="font-normal">{option}</Label>
-                            </div>
-                        ))}
-                    </RadioGroup>
-                </div>
-              ))
-            )}
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+              <p className="text-gray-600 dark:text-gray-400">Generating your assessment...</p>
+            </div>
+          ) : (
+            quizQuestions.map((q, i) => (
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="space-y-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50"
+              >
+                <p className="font-semibold text-gray-900 dark:text-gray-100 flex items-start gap-2">
+                  <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 mt-0.5">
+                    <HelpCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0"/>
+                  </div>
+                  {q.question}
+                </p>
+                <RadioGroup 
+                  onValueChange={(value) => handleQuizAnswerChange(q.question, value)}
+                  value={quizAnswers[q.question]}
+                  className="pl-7 space-y-3"
+                >
+                  {q.options.map((option, j) => (
+                    <div key={j} className="flex items-center space-x-3">
+                      <RadioGroupItem 
+                        value={option} 
+                        id={`q${i}-option${j}`} 
+                        className="text-blue-600 border-gray-300"
+                      />
+                      <Label 
+                        htmlFor={`q${i}-option${j}`} 
+                        className="font-normal text-gray-800 dark:text-gray-200 cursor-pointer"
+                      >
+                        {option}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </motion.div>
+            ))
+          )}
         </CardContent>
         <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep('initial')}>Back</Button>
-            <Button onClick={onQuizSubmit} disabled={isLoading || Object.keys(quizAnswers).length < quizQuestions.length}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Generate My Roadmap
-            </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setStep('initial')} 
+            className="border-gray-300 shadow-sm"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button 
+            onClick={onQuizSubmit} 
+            disabled={isLoading || Object.keys(quizAnswers).length < quizQuestions.length}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md"
+          >
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Generate My Roadmap
+          </Button>
         </CardFooter>
-    </Card>
+      </Card>
+    </motion.div>
   );
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-3xl font-bold font-headline">New Learning Roadmap</h1>
-        <p className="text-muted-foreground">Chart your course to mastery with an AI-generated learning plan.</p>
-      </div>
+    <div className="flex flex-col gap-8 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen">
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.4 }}
+      >
+        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+          New Learning Roadmap
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Chart your course to mastery with an AI-generated learning plan.</p>
+      </motion.div>
+      
       {step === 'initial' && renderInitialStep()}
       {step === 'quiz' && renderQuizStep()}
       
-       {error && (
-         <Card className="max-w-2xl mx-auto w-full border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle/> Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{error}</p>
-          </CardContent>
-        </Card>
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl mx-auto w-full"
+        >
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden border-l-4 border-l-destructive">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5"/> 
+                Error
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-900 dark:text-gray-100">{error}</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
     </div>
   );

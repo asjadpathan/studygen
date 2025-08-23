@@ -7,7 +7,7 @@ import { collection, query, onSnapshot, orderBy, doc, deleteDoc } from 'firebase
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlusCircle, Map, GitMerge, ArrowRight, MoreVertical, Trash2 } from 'lucide-react';
+import { PlusCircle, Map, GitMerge, ArrowRight, MoreVertical, Trash2, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 
 interface Roadmap {
   id: string;
@@ -113,116 +114,208 @@ export default function RoadmapListPage() {
     return Math.round((completedConcepts / totalConcepts) * 100);
   }
 
+  const getGradientByProgress = (progress: number) => {
+    if (progress >= 80) return 'from-green-500 to-emerald-500';
+    if (progress >= 50) return 'from-blue-500 to-cyan-500';
+    if (progress >= 25) return 'from-amber-500 to-yellow-500';
+    return 'from-gray-500 to-gray-600';
+  }
+
   return (
     <>
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-gray-800 border-0 rounded-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-gray-900 dark:text-gray-100">Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 dark:text-gray-400">
               This action cannot be undone. This will permanently delete this roadmap and all its progress.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setRoadmapToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel className="border-gray-300 bg-white hover:bg-gray-50 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-600">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <div className="flex flex-col gap-8">
-        <div className="flex justify-between items-center">
+      
+      <div className="flex flex-col gap-8 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 min-h-screen">
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.4 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        >
           <div>
-            <h1 className="text-3xl font-bold font-headline">My Roadmaps</h1>
-            <p className="text-muted-foreground">Review your learning plans or create a new one.</p>
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              My Roadmaps
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Review your learning plans or create a new one.</p>
           </div>
-          <Button asChild>
+          <Button 
+            asChild 
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md"
+          >
             <Link href="/roadmap/create">
               <PlusCircle className="mr-2 h-4 w-4" />
               Create New Roadmap
             </Link>
           </Button>
-        </div>
+        </motion.div>
 
         {isLoading && (
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <Card><CardHeader><Skeleton className="h-6 w-2/3" /></CardHeader><CardContent><Skeleton className="h-4 w-1/2" /><Skeleton className="h-10 w-full mt-4" /></CardContent><CardFooter><Skeleton className="h-10 w-full" /></CardFooter></Card>
-              <Card><CardHeader><Skeleton className="h-6 w-2/3" /></CardHeader><CardContent><Skeleton className="h-4 w-1/2" /><Skeleton className="h-10 w-full mt-4" /></CardContent><CardFooter><Skeleton className="h-10 w-full" /></CardFooter></Card>
-              <Card><CardHeader><Skeleton className="h-6 w-2/3" /></CardHeader><CardContent><Skeleton className="h-4 w-1/2" /><Skeleton className="h-10 w-full mt-4" /></CardContent><CardFooter><Skeleton className="h-10 w-full" /></CardFooter></Card>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map(i => (
+              <Card key={i} className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700"></div>
+                <CardHeader className="pb-3">
+                  <Skeleton className="h-6 w-2/3" />
+                  <Skeleton className="h-4 w-1/2 mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-1/4" />
+                      <Skeleton className="h-4 w-1/6" />
+                    </div>
+                    <Skeleton className="h-2 w-full rounded-full" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-1/3" />
+                    <div className="flex flex-wrap gap-2">
+                      <Skeleton className="h-6 w-16 rounded-full" />
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-10 w-full rounded-lg" />
+                </CardFooter>
+              </Card>
+            ))}
           </div>
         )}
 
         {!isLoading && roadmaps.length === 0 && (
-          <Card className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-              <GitMerge size={48} className="text-muted-foreground"/>
-              <CardTitle className="font-headline">No Roadmaps Yet</CardTitle>
-              <CardDescription>You haven&apos;t created any learning roadmaps.</CardDescription>
-              <Button asChild>
-                  <Link href="/roadmap/create">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Create Your First Roadmap
-                  </Link>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="flex flex-col items-center justify-center py-24 gap-4 text-center bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl">
+              <div className="p-4 rounded-full bg-indigo-100 dark:bg-indigo-900/30">
+                <GitMerge size={48} className="text-indigo-600 dark:text-indigo-400"/>
+              </div>
+              <CardTitle className="font-headline text-2xl text-gray-900 dark:text-gray-100">No Roadmaps Yet</CardTitle>
+              <CardDescription className="text-gray-600 dark:text-gray-400">You haven't created any learning roadmaps.</CardDescription>
+              <Button 
+                asChild
+                className="mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md"
+              >
+                <Link href="/roadmap/create">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create Your First Roadmap
+                </Link>
               </Button>
-          </Card>
+            </Card>
+          </motion.div>
         )}
 
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-          {roadmaps.map(roadmap => {
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {roadmaps.map((roadmap, index) => {
             const progress = calculateProgress(roadmap);
+            const gradient = getGradientByProgress(progress);
+            
             return (
-            <Card key={roadmap.id} className="flex flex-col bg-card hover:shadow-xl transition-shadow duration-300 ease-in-out">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                    <CardTitle className="flex items-start gap-3 font-headline flex-1">
-                      <div className="bg-primary/10 p-3 rounded-lg"><Map className="h-6 w-6 text-primary" /></div>
-                      <div className="flex-1">{roadmap.goals}</div>
-                    </CardTitle>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openDeleteDialog(roadmap.id)} className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4"/>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-                <CardDescription>
-                  Created on: {roadmap.createdAt?.toDate().toLocaleDateString()}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow space-y-4">
-                <div className="space-y-2">
+              <motion.div
+                key={roadmap.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                  <div className={`h-2 bg-gradient-to-r ${gradient}`}></div>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 mt-1">
+                          <Map className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="font-headline text-lg text-gray-900 dark:text-gray-100 line-clamp-2">
+                            {roadmap.goals}
+                          </CardTitle>
+                          <CardDescription className="text-sm mt-1">
+                            Created: {roadmap.createdAt?.toDate().toLocaleDateString()}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl">
+                          <DropdownMenuItem 
+                            onClick={() => openDeleteDialog(roadmap.id)} 
+                            className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-900/20"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-4">
+                    <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                          <h4 className="font-semibold text-sm">Progress</h4>
-                          <span className="text-sm font-bold text-primary">{progress}%</span>
+                        <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300">Progress</h4>
+                        <span className="text-sm font-bold text-primary">{progress}%</span>
                       </div>
-                      <Progress value={progress} />
-                </div>
-                <div className="space-y-2">
-                      <h4 className="font-semibold text-sm">Next Modules</h4>
+                      <Progress value={progress} className="h-2" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300">Next Modules</h4>
                       <div className="flex flex-wrap gap-2">
-                          {Array.isArray(roadmap.roadmap) && roadmap.roadmap.slice(0, 3).map((item, index) => (
-                              <Badge key={index} variant="secondary">{item.title}</Badge>
-                          ))}
-                          {Array.isArray(roadmap.roadmap) && roadmap.roadmap.length > 3 && (
-                              <Badge variant="outline">...</Badge>
-                          )}
+                        {Array.isArray(roadmap.roadmap) && roadmap.roadmap.slice(0, 3).map((item, index) => (
+                          <Badge 
+                            key={index} 
+                            variant="secondary" 
+                            className="bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                          >
+                            {item.title}
+                          </Badge>
+                        ))}
+                        {Array.isArray(roadmap.roadmap) && roadmap.roadmap.length > 3 && (
+                          <Badge variant="outline" className="border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                            +{roadmap.roadmap.length - 3} more
+                          </Badge>
+                        )}
                       </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                  <Button asChild className="w-full">
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      asChild 
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md"
+                    >
                       <Link href={`/roadmap/${roadmap.id}`}>
-                          View Full Roadmap <ArrowRight className="ml-2 h-4 w-4" />
+                        View Full Roadmap <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
-                  </Button>
-              </CardFooter>
-            </Card>
-          )})}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </>
