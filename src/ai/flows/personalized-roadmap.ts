@@ -31,12 +31,10 @@ const PersonalizedRoadmapOutputSchema = z.object({
     .array(
       z.object({
         title: z.string().describe('The title of the module.'),
-        content: z
-          .string()
-          .describe('The detailed content of the module, including concepts, resources, and exercises. Should be in Markdown format.'),
+        concepts: z.array(z.string()).describe('A list of key concepts, skills, or units that make up this module.'),
       })
     )
-    .describe('A personalized learning roadmap tailored to the user goals, expertise, and available study time. It should be broken down into a series of modules.'),
+    .describe('A personalized learning roadmap tailored to the user goals, expertise, and available study time. It should be broken down into a series of modules, each containing sub-concepts.'),
 });
 export type PersonalizedRoadmapOutput = z.infer<typeof PersonalizedRoadmapOutputSchema>;
 
@@ -54,13 +52,13 @@ const personalizedRoadmapPrompt = ai.definePrompt({
 
   Based on the user's goals, expertise, and available study time, generate a personalized learning roadmap.
   If the user's expertise contains results from a skill assessment, use that to identify knowledge gaps and tailor the roadmap to address them specifically.
-  The roadmap should be highly detailed, broken down into weekly modules, and include suggestions for projects, quizzes, and resources. Make it engaging and encouraging.
+  The roadmap should be highly detailed, broken down into weekly modules. Each module must contain a list of specific, granular concepts to learn.
 
   Goals: {{{goals}}}
   Expertise: {{{expertise}}}
   Available Study Time: {{{availableStudyTime}}}
 
-  Generate the roadmap as a JSON object containing a 'roadmap' array. Each element in the array should be a module with a 'title' and 'content' field. The content should be in Markdown format.
+  Generate the roadmap as a JSON object containing a 'roadmap' array. Each element in the array should be a module with a 'title' and a 'concepts' array of strings.
   `,
 });
 

@@ -7,3 +7,4 @@ import '@/ai/flows/active-feedback.ts';
 import '@/ai/flows/skill-assessment.ts';
 import '@/ai/flows/search-topic.ts';
 import '@/ai/flows/process-material.ts';
+import '@/ai/flows/get-concept-explanation.ts';
