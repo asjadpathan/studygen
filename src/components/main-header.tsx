@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CircleUser, Menu, Search, GraduationCap, LayoutDashboard, ClipboardCheck, GitMerge, BrainCircuit, Upload, Loader2 } from "lucide-react";
+import { CircleUser, Menu, Search, GraduationCap, LayoutDashboard, Compass, GitMerge, BrainCircuit, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,7 +22,7 @@ import { useEffect, useState } from "react";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/assessment", label: "Skill Assessment", icon: ClipboardCheck },
+  { href: "/resources", label: "Resources", icon: Compass },
   { href: "/roadmap", label: "My Roadmap", icon: GitMerge },
   { href: "/study", label: "Study Zone", icon: BrainCircuit },
   { href: "/upload", label: "Upload Material", icon: Upload },
