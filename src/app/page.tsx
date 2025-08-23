@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { auth, db } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -60,17 +60,24 @@ export default function LoginPage() {
       );
       const user = userCredential.user;
 
-      // Check if user exists in Firestore
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      // Check if user exists in Firestore, if not create them
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
       if (!userDoc.exists()) {
-        throw new Error("User data not found. Please sign up again.");
+         await setDoc(userDocRef, {
+          email: user.email,
+          createdAt: serverTimestamp(),
+          studyStreak: 0,
+          skillsMastered: 0,
+          timeStudied: 0,
+        });
       }
 
       router.push('/dashboard');
     } catch (error: any) {
       toast({
         title: 'Login Failed',
-        description: error.message,
+        description: 'Invalid email or password. Please try again.',
         variant: 'destructive',
       });
     } finally {
