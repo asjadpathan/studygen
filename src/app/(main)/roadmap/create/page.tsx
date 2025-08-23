@@ -9,7 +9,7 @@ import { generatePersonalizedRoadmap } from '@/ai/flows/personalized-roadmap';
 import { generateQuizAndExplanation, QuizAndExplanationOutput } from '@/ai/flows/active-feedback';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, AlertTriangle, Map, HelpCircle, Bot } from 'lucide-react';
