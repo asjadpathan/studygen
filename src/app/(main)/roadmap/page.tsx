@@ -164,73 +164,83 @@ export default function RoadmapListPage() {
     }
   };
 
-  const ConceptQuiz = ({concept}: {concept: string}) => (
-    <div className="mt-4 p-4 border-t-2 border-primary/20">
-      {quizState === 'idle' && (
-        <Button onClick={() => handleStartQuiz(concept)}>
-          <HelpCircle className="mr-2"/> Test Your Knowledge
-        </Button>
-      )}
+  const ConceptQuiz = ({concept}: {concept: string}) => {
+     // Only render the quiz if the active concept matches the quiz's parent concept
+    if (activeConcept !== quizConceptKey && quizState === 'idle') {
+       return (
+         <div className="mt-4 p-4 border-t-2 border-primary/20">
+            <Button onClick={() => handleStartQuiz(concept)}>
+              <HelpCircle className="mr-2"/> Test Your Knowledge
+            </Button>
+         </div>
+       );
+    }
+    
+    // Don't render anything if it's not the active quiz's turn
+    if (activeConcept !== quizConceptKey) return null;
 
-      {(quizState === 'loading' && !quizData) && (
-        <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin"/>
-            <span>Generating quiz...</span>
-        </div>
-      )}
-
-      {quizData && (quizState === 'ready' || quizState === 'answered' || (quizState === 'loading' && !!quizData)) && (
-          <div className="space-y-4">
-              <p className="font-semibold">{quizData.question}</p>
-              <RadioGroup
-                value={selectedAnswer ?? ''}
-                onValueChange={setSelectedAnswer}
-                disabled={quizState === 'answered' || quizState === 'loading'}
-              >
-                {quizData.options.map((option, index) => (
-                   <Label key={index} htmlFor={`quiz-${index}`} className={`flex items-center gap-3 p-3 rounded-md border transition-all cursor-pointer ${
-                        quizState === 'answered' && option === quizData.correctAnswer ? 'border-green-500 bg-green-500/10' : ''
-                      } ${
-                        quizState === 'answered' && option === selectedAnswer && !isCorrect ? 'border-destructive bg-destructive/10' : ''
-                      }`}>
-                        <RadioGroupItem value={option} id={`quiz-${index}`} disabled={quizState === 'answered' || quizState === 'loading'} />
-                        <span>{option}</span>
-                    </Label>
-                ))}
-              </RadioGroup>
-
-              {quizState === 'answered' && isCorrect !== null && (
-                 <Alert variant={isCorrect ? "default" : "destructive"} className={isCorrect ? "border-green-500 text-green-700" : ""}>
-                  {isCorrect ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                  <AlertTitle>{isCorrect ? 'Correct!' : 'Not quite!'}</AlertTitle>
-                  <AlertDescription>
-                    {isCorrect ? 'Great job!' : `The correct answer is: ${quizData.correctAnswer}`}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {quizFeedback && (
-                <Alert className="mt-4 animate-in fade-in-50">
-                  <Lightbulb className="h-4 w-4" />
-                  <AlertTitle>Explanation</AlertTitle>
-                  <AlertDescription className="whitespace-pre-wrap">{quizFeedback}</AlertDescription>
-                </Alert>
-              )}
-
-              {quizState === 'loading' && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin"/>
-                    <span>Checking answer...</span>
-                </div>
-              )}
-
-              {quizState === 'ready' && <Button onClick={handleQuizSubmit} disabled={!selectedAnswer}>Submit Answer</Button>}
-              {quizState === 'answered' && <Button onClick={() => handleStartQuiz(concept)}>Try another question</Button>}
-
+    return (
+      <div className="mt-4 p-4 border-t-2 border-primary/20">
+        {(quizState === 'loading' && !quizData) && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin"/>
+              <span>Generating quiz...</span>
           </div>
-      )}
-    </div>
-  );
+        )}
+
+        {quizData && (quizState === 'ready' || quizState === 'answered' || (quizState === 'loading' && !!quizData)) && (
+            <div className="space-y-4">
+                <p className="font-semibold">{quizData.question}</p>
+                <RadioGroup
+                  value={selectedAnswer ?? ''}
+                  onValueChange={setSelectedAnswer}
+                  disabled={quizState === 'answered' || quizState === 'loading'}
+                >
+                  {quizData.options.map((option, index) => (
+                     <Label key={index} htmlFor={`quiz-${index}`} className={`flex items-center gap-3 p-3 rounded-md border transition-all cursor-pointer ${
+                          quizState === 'answered' && option === quizData.correctAnswer ? 'border-green-500 bg-green-500/10' : ''
+                        } ${
+                          quizState === 'answered' && option === selectedAnswer && !isCorrect ? 'border-destructive bg-destructive/10' : ''
+                        }`}>
+                          <RadioGroupItem value={option} id={`quiz-${index}`} disabled={quizState === 'answered' || quizState === 'loading'} />
+                          <span>{option}</span>
+                      </Label>
+                  ))}
+                </RadioGroup>
+
+                {quizState === 'answered' && isCorrect !== null && (
+                   <Alert variant={isCorrect ? "default" : "destructive"} className={isCorrect ? "border-green-500 text-green-700" : ""}>
+                    {isCorrect ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                    <AlertTitle>{isCorrect ? 'Correct!' : 'Not quite!'}</AlertTitle>
+                    <AlertDescription>
+                      {isCorrect ? 'Great job!' : `The correct answer is: ${quizData.correctAnswer}`}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {quizFeedback && (
+                  <Alert className="mt-4 animate-in fade-in-50">
+                    <Lightbulb className="h-4 w-4" />
+                    <AlertTitle>Explanation</AlertTitle>
+                    <AlertDescription className="whitespace-pre-wrap">{quizFeedback}</AlertDescription>
+                  </Alert>
+                )}
+
+                {quizState === 'loading' && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin"/>
+                      <span>Checking answer...</span>
+                  </div>
+                )}
+
+                {quizState === 'ready' && <Button onClick={handleQuizSubmit} disabled={!selectedAnswer}>Submit Answer</Button>}
+                {quizState === 'answered' && <Button onClick={() => handleStartQuiz(concept)}>Try another question</Button>}
+
+            </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -310,9 +320,6 @@ export default function RoadmapListPage() {
                                                     />
                                                     <ConceptQuiz concept={concept}/>
                                                   </>
-                                                )}
-                                                {quizConceptKey === activeConcept && quizState !== 'idle' && (
-                                                   <ConceptQuiz concept={concept}/>
                                                 )}
                                             </div>
                                         )}
