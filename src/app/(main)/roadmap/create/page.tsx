@@ -23,10 +23,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
 
 const learningStyles = [
-  { id: 'visual', label: 'Visual', color: 'from-blue-500 to-cyan-500' },
-  { id: 'auditory', label: 'Auditory', color: 'from-purple-500 to-pink-500' },
-  { id: 'kinesthetic', label: 'Kinesthetic (Hands-on)', color: 'from-orange-500 to-red-500' },
-  { id: 'reading_writing', label: 'Reading/Writing', color: 'from-green-500 to-emerald-500' },
+  { id: 'visual', label: 'Visual' },
+  { id: 'auditory', label: 'Auditory' },
+  { id: 'kinesthetic', label: 'Kinesthetic (Hands-on)' },
+  { id: 'reading_writing', label: 'Reading/Writing' },
 ];
 
 const resourceTypes = [
@@ -228,48 +228,38 @@ export default function CreateRoadmapPage() {
               />
 
               <FormField
-                  control={form.control}
-                  name="learningStyle"
-                  render={({ field }) => (
-                    <FormItem>
-                       <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Learning Style(s)</FormLabel>
-                       <FormDescription className="text-gray-600 dark:text-gray-400">
-                          Select one or more styles that work best for you.
-                       </FormDescription>
-                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        {learningStyles.map((item) => {
-                           const isSelected = field.value?.includes(item.id);
-                           return (
-                              <div
-                                key={item.id}
-                                className={`rounded-xl p-4 border-2 cursor-pointer transition-all ${isSelected
-                                  ? `border-transparent bg-gradient-to-r ${item.color} text-white shadow-md`
-                                  : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-gray-700'}`
+                control={form.control}
+                name="learningStyle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Learning Style(s)</FormLabel>
+                    <FormDescription className="text-gray-600 dark:text-gray-400">
+                      Select one or more styles that work best for you.
+                    </FormDescription>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      {learningStyles.map((item) => (
+                        <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(item.id)}
+                              onCheckedChange={(checked) => {
+                                const currentValue = field.value || [];
+                                if (checked) {
+                                  field.onChange([...currentValue, item.id]);
+                                } else {
+                                  field.onChange(currentValue.filter((value) => value !== item.id));
                                 }
-                                onClick={() => {
-                                  const newValue = isSelected
-                                    ? field.value?.filter((value) => value !== item.id)
-                                    : [...(field.value || []), item.id];
-                                  field.onChange(newValue);
-                                }}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <Checkbox
-                                    checked={isSelected}
-                                    className={`${isSelected ? 'border-white bg-white/20' : ''}`}
-                                    // Let the div handle the click to avoid nested interactive elements
-                                    readOnly 
-                                  />
-                                  <FormLabel className="font-normal cursor-pointer text-current">
-                                    {item.label}
-                                  </FormLabel>
-                                </div>
-                              </div>
-                           )
-                        })}
-                       </div>
-                       <FormMessage />
-                    </FormItem>
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            {item.label}
+                          </FormLabel>
+                        </FormItem>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
 
@@ -284,21 +274,17 @@ export default function CreateRoadmapPage() {
                     </FormDescription>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                       {resourceTypes.map((item) => (
-                        <FormItem
-                          key={item.id}
-                          className="flex flex-row items-center space-x-3 space-y-0"
-                        >
+                        <FormItem key={item.id} className="flex flex-row items-center space-x-3 space-y-0">
                           <FormControl>
                             <Checkbox
                               checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...(field.value || []), item.id])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item.id
-                                      )
-                                    );
+                                const currentValue = field.value || [];
+                                if (checked) {
+                                  field.onChange([...currentValue, item.id]);
+                                } else {
+                                  field.onChange(currentValue.filter((value) => value !== item.id));
+                                }
                               }}
                             />
                           </FormControl>
