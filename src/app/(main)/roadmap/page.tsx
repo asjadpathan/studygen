@@ -7,9 +7,13 @@ import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlusCircle, Map, GitMerge, Loader2, BookOpen } from 'lucide-react';
+import { PlusCircle, Map, GitMerge, Loader2, BookOpen, HelpCircle, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getConceptExplanation, GetConceptExplanationOutput } from '@/ai/flows/get-concept-explanation';
+import { generateQuizAndExplanation, QuizAndExplanationOutput } from '@/ai/flows/active-feedback';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Roadmap {
   id: string;
@@ -23,6 +27,8 @@ interface Roadmap {
     concepts: string[];
   }[];
 }
+
+type QuizState = 'idle' | 'loading' | 'ready' | 'answered';
 
 function markdownToHtml(markdown: string) {
     if (!markdown) return '';
@@ -45,19 +51,35 @@ export default function RoadmapListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // State for explanation
   const [activeConcept, setActiveConcept] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<GetConceptExplanationOutput | null>(null);
   const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
 
+  // State for quiz
+  const [quizConceptKey, setQuizConceptKey] = useState<string | null>(null);
+  const [quizData, setQuizData] = useState<QuizAndExplanationOutput | null>(null);
+  const [quizState, setQuizState] = useState<QuizState>('idle');
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [quizFeedback, setQuizFeedback] = useState<string | null>(null);
+
+
   const handleConceptClick = useCallback(async (concept: string, roadmap: Roadmap) => {
     const conceptKey = `${roadmap.id}-${concept}`;
     if (activeConcept === conceptKey) {
-      setActiveConcept(null); // Toggle off if clicking the same concept
+      setActiveConcept(null);
       setExplanation(null);
+      setQuizConceptKey(null);
+      setQuizData(null);
+      setQuizState('idle');
       return;
     }
     
     setActiveConcept(conceptKey);
+    setQuizConceptKey(null);
+    setQuizData(null);
+    setQuizState('idle');
     setIsLoadingExplanation(true);
     setExplanation(null);
     try {
@@ -99,6 +121,116 @@ export default function RoadmapListPage() {
     });
     return () => unsubscribe();
   }, []);
+
+  const handleStartQuiz = async (concept: string) => {
+      setQuizConceptKey(activeConcept);
+      setQuizState('loading');
+      setQuizFeedback(null);
+      setSelectedAnswer(null);
+      setIsCorrect(null);
+      try {
+          const result = await generateQuizAndExplanation({ topic: concept });
+          setQuizData(result);
+          setQuizState('ready');
+      } catch (err) {
+          console.error(err);
+          setQuizFeedback("Sorry, couldn't generate a quiz for this concept.");
+          setQuizState('idle');
+      }
+  }
+
+  const handleQuizSubmit = async () => {
+    if (!selectedAnswer || !quizData) return;
+
+    setQuizState('answered');
+    const correct = selectedAnswer === quizData.correctAnswer;
+    setIsCorrect(correct);
+
+    if (!correct) {
+      setQuizState('loading');
+      try {
+        const result = await generateQuizAndExplanation({
+          topic: quizData.question,
+          userAnswer: selectedAnswer,
+          correctAnswer: quizData.correctAnswer,
+        });
+        setQuizFeedback(result.explanation);
+      } catch (error) {
+        console.error('Failed to fetch explanation:', error);
+        setQuizFeedback('Sorry, there was an error generating the explanation.');
+      } finally {
+        setQuizState('answered');
+      }
+    }
+  };
+
+  const ConceptQuiz = ({concept}: {concept: string}) => (
+    <div className="mt-4 p-4 border-t-2 border-primary/20">
+      {quizState === 'idle' && (
+        <Button onClick={() => handleStartQuiz(concept)}>
+          <HelpCircle className="mr-2"/> Test Your Knowledge
+        </Button>
+      )}
+
+      {(quizState === 'loading' && !quizData) && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin"/>
+            <span>Generating quiz...</span>
+        </div>
+      )}
+
+      {quizData && (quizState === 'ready' || quizState === 'answered' || (quizState === 'loading' && !!quizData)) && (
+          <div className="space-y-4">
+              <p className="font-semibold">{quizData.question}</p>
+              <RadioGroup
+                value={selectedAnswer ?? ''}
+                onValueChange={setSelectedAnswer}
+                disabled={quizState === 'answered' || quizState === 'loading'}
+              >
+                {quizData.options.map((option, index) => (
+                   <Label key={index} htmlFor={`quiz-${index}`} className={`flex items-center gap-3 p-3 rounded-md border transition-all cursor-pointer ${
+                        quizState === 'answered' && option === quizData.correctAnswer ? 'border-green-500 bg-green-500/10' : ''
+                      } ${
+                        quizState === 'answered' && option === selectedAnswer && !isCorrect ? 'border-destructive bg-destructive/10' : ''
+                      }`}>
+                        <RadioGroupItem value={option} id={`quiz-${index}`} disabled={quizState === 'answered' || quizState === 'loading'} />
+                        <span>{option}</span>
+                    </Label>
+                ))}
+              </RadioGroup>
+
+              {quizState === 'answered' && isCorrect !== null && (
+                 <Alert variant={isCorrect ? "default" : "destructive"} className={isCorrect ? "border-green-500 text-green-700" : ""}>
+                  {isCorrect ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                  <AlertTitle>{isCorrect ? 'Correct!' : 'Not quite!'}</AlertTitle>
+                  <AlertDescription>
+                    {isCorrect ? 'Great job!' : `The correct answer is: ${quizData.correctAnswer}`}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {quizFeedback && (
+                <Alert className="mt-4 animate-in fade-in-50">
+                  <Lightbulb className="h-4 w-4" />
+                  <AlertTitle>Explanation</AlertTitle>
+                  <AlertDescription className="whitespace-pre-wrap">{quizFeedback}</AlertDescription>
+                </Alert>
+              )}
+
+              {quizState === 'loading' && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin"/>
+                    <span>Checking answer...</span>
+                </div>
+              )}
+
+              {quizState === 'ready' && <Button onClick={handleQuizSubmit} disabled={!selectedAnswer}>Submit Answer</Button>}
+              {quizState === 'answered' && <Button onClick={() => handleStartQuiz(concept)}>Try another question</Button>}
+
+          </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -172,9 +304,15 @@ export default function RoadmapListPage() {
                                                     </div>
                                                 )}
                                                 {explanation && (
+                                                  <>
                                                     <div className="prose prose-sm dark:prose-invert max-w-none"
                                                         dangerouslySetInnerHTML={{ __html: markdownToHtml(explanation.explanation) }}
                                                     />
+                                                    <ConceptQuiz concept={concept}/>
+                                                  </>
+                                                )}
+                                                {quizConceptKey === activeConcept && quizState !== 'idle' && (
+                                                   <ConceptQuiz concept={concept}/>
                                                 )}
                                             </div>
                                         )}
