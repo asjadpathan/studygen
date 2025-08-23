@@ -47,7 +47,7 @@ interface Roadmap {
     title: string;
     concepts: string[];
   }[];
-  completedConcepts?: { name: string; completedAt: any }[];
+  completedConcepts?: string[];
 }
 
 type QuizState = 'idle' | 'loading' | 'ready' | 'answered';
@@ -183,17 +183,13 @@ export default function RoadmapDetailPage() {
     const docRef = doc(db, 'users', user.uid, 'roadmaps', roadmap.id);
     try {
       if (isCompleted) {
-        // To remove, we need to find the specific object to remove.
-        const conceptToRemove = roadmap.completedConcepts?.find(c => c.name === conceptName);
-        if (conceptToRemove) {
-          await updateDoc(docRef, {
-            completedConcepts: arrayRemove(conceptToRemove)
-          });
-          toast({ title: "Concept marked as incomplete."});
-        }
+        await updateDoc(docRef, {
+          completedConcepts: arrayRemove(conceptName)
+        });
+        toast({ title: "Concept marked as incomplete."});
       } else {
         await updateDoc(docRef, {
-          completedConcepts: arrayUnion({ name: conceptName, completedAt: new Date() })
+          completedConcepts: arrayUnion(conceptName)
         });
          toast({ title: "Concept marked as complete!", description: "Great progress!"});
       }
@@ -262,7 +258,7 @@ export default function RoadmapDetailPage() {
   }
   
   const handleStartReviewQuiz = useCallback(async () => {
-    const completedConceptNames = roadmap?.completedConcepts?.map(c => c.name) || [];
+    const completedConceptNames = roadmap?.completedConcepts || [];
     if (completedConceptNames.length === 0) return;
 
     setReviewQuizState('loading');
@@ -537,7 +533,7 @@ export default function RoadmapDetailPage() {
     return null; // or a not found component
   }
   
-  const completedConceptNames = roadmap.completedConcepts?.map(c => c.name) || [];
+  const completedConceptNames = roadmap.completedConcepts || [];
   const progress = calculateProgress(roadmap);
   const totalConcepts = roadmap.roadmap?.flatMap(module => module.concepts || []).length || 0;
 
@@ -829,5 +825,3 @@ export default function RoadmapDetailPage() {
     </div>
   );
 }
-
-    
