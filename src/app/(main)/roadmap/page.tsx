@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlusCircle, Map, GitMerge, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface Roadmap {
   id: string;
@@ -21,6 +22,7 @@ interface Roadmap {
     title: string;
     concepts: string[];
   }[];
+  completedConcepts?: string[];
 }
 
 export default function RoadmapListPage() {
@@ -52,6 +54,13 @@ export default function RoadmapListPage() {
     });
     return () => unsubscribe();
   }, []);
+
+  const calculateProgress = (roadmap: Roadmap) => {
+    const totalConcepts = roadmap.roadmap?.flatMap(module => module.concepts || []).length || 0;
+    if (totalConcepts === 0) return 0;
+    const completedConcepts = roadmap.completedConcepts?.length || 0;
+    return Math.round((completedConcepts / totalConcepts) * 100);
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -91,24 +100,34 @@ export default function RoadmapListPage() {
       )}
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-        {roadmaps.map(roadmap => (
-          <Card key={roadmap.id} className="flex flex-col hover:shadow-lg transition-shadow">
+        {roadmaps.map(roadmap => {
+          const progress = calculateProgress(roadmap);
+          return (
+          <Card key={roadmap.id} className="flex flex-col bg-card hover:shadow-xl transition-shadow duration-300 ease-in-out">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-headline">
-                <Map className="text-primary" /> {roadmap.goals}
+              <CardTitle className="flex items-start gap-3 font-headline">
+                <div className="bg-primary/10 p-3 rounded-lg"><Map className="h-6 w-6 text-primary" /></div>
+                <div className="flex-1">{roadmap.goals}</div>
               </CardTitle>
               <CardDescription>
                 Created on: {roadmap.createdAt?.toDate().toLocaleDateString()}
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex-grow">
+            <CardContent className="flex-grow space-y-4">
                <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Modules</h4>
+                    <div className="flex justify-between items-center">
+                        <h4 className="font-semibold text-sm">Progress</h4>
+                        <span className="text-sm font-bold text-primary">{progress}%</span>
+                    </div>
+                    <Progress value={progress} />
+               </div>
+               <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Next Modules</h4>
                     <div className="flex flex-wrap gap-2">
-                        {Array.isArray(roadmap.roadmap) && roadmap.roadmap.slice(0, 5).map((item, index) => (
+                        {Array.isArray(roadmap.roadmap) && roadmap.roadmap.slice(0, 3).map((item, index) => (
                             <Badge key={index} variant="secondary">{item.title}</Badge>
                         ))}
-                         {Array.isArray(roadmap.roadmap) && roadmap.roadmap.length > 5 && (
+                         {Array.isArray(roadmap.roadmap) && roadmap.roadmap.length > 3 && (
                             <Badge variant="outline">...</Badge>
                         )}
                     </div>
@@ -117,12 +136,12 @@ export default function RoadmapListPage() {
             <CardFooter>
                  <Button asChild className="w-full">
                     <Link href={`/roadmap/${roadmap.id}`}>
-                        View Full Roadmap <ArrowRight className="ml-2" />
+                        View Full Roadmap <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                 </Button>
             </CardFooter>
           </Card>
-        ))}
+        )})}
       </div>
     </div>
   );
