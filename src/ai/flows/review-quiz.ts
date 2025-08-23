@@ -22,7 +22,9 @@ const prompt = ai.definePrompt({
   output: {schema: ReviewQuizOutputSchema},
   prompt: `You are an AI assistant that generates quizzes to help users review concepts they have learned.
 
-  Based on the following list of topics, generate one multiple-choice question for each topic. Each question should have 4 options.
+  Based on the following list of topics, generate a review quiz with a minimum of 10 multiple-choice questions. Each question should have 4 options.
+  
+  If the number of topics provided is less than 10, you must generate multiple questions for some of the topics to ensure the quiz has at least 10 questions in total.
 
   Topics:
   {{#each topics}}
