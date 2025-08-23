@@ -1,5 +1,3 @@
-// This file is machine-generated - edit at your own risk.
-
 'use server';
 
 /**
@@ -23,6 +21,18 @@ const PersonalizedRoadmapInputSchema = z.object({
   availableStudyTime: z
     .string()
     .describe('The amount of time the user has available to study, e.g. "1 hour per day for 3 months".'),
+  learningStyle: z
+    .array(z.string())
+    .optional()
+    .describe('The user\'s preferred learning style(s), e.g., "Visual", "Auditory", "Kinesthetic".'),
+  preferredResourceTypes: z
+    .array(z.string())
+    .optional()
+    .describe('The user\'s preferred types of learning resources, e.g., "Videos", "Articles", "Interactive Labs".'),
+  specificTopics: z
+    .string()
+    .optional()
+    .describe('Any specific topics the user wants to ensure are included or excluded from the roadmap.'),
 });
 export type PersonalizedRoadmapInput = z.infer<typeof PersonalizedRoadmapInputSchema>;
 
@@ -52,11 +62,15 @@ const personalizedRoadmapPrompt = ai.definePrompt({
 
   Based on the user's goals, expertise, and available study time, generate a personalized learning roadmap.
   If the user's expertise contains results from a skill assessment, use that to identify knowledge gaps and tailor the roadmap to address them specifically.
+  Consider the user's preferred learning style and resource types when structuring the plan.
   The roadmap should be highly detailed, broken down into weekly modules. Each module must contain a list of specific, granular concepts to learn.
 
   Goals: {{{goals}}}
   Expertise: {{{expertise}}}
   Available Study Time: {{{availableStudyTime}}}
+  Learning Style: {{#if learningStyle}}{{#each learningStyle}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}Not specified{{/if}}
+  Preferred Resource Types: {{#if preferredResourceTypes}}{{#each preferredResourceTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}Not specified{{/if}}
+  Specific Topics to Include/Exclude: {{{specificTopics}}}
 
   Generate the roadmap as a JSON object containing a 'roadmap' array. Each element in the array should be a module with a 'title' and a 'concepts' array of strings.
   `,

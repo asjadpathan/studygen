@@ -18,11 +18,30 @@ import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+
+const learningStyles = [
+  { id: 'visual', label: 'Visual' },
+  { id: 'auditory', label: 'Auditory' },
+  { id: 'kinesthetic', label: 'Kinesthetic (Hands-on)' },
+  { id: 'reading_writing', label: 'Reading/Writing' },
+];
+
+const resourceTypes = [
+  { id: 'videos', label: 'Videos' },
+  { id: 'articles', label: 'Articles' },
+  { id: 'interactive_labs', label: 'Interactive Labs' },
+  { id: 'books', label: 'Books' },
+  { id: 'projects', label: 'Projects' },
+];
 
 const formSchema = z.object({
   goals: z.string().min(10, { message: 'Please describe your goals in more detail.' }),
   expertise: z.string().min(10, { message: 'Please describe your expertise in more detail.' }),
   availableStudyTime: z.string().min(2, { message: 'Please specify your available study time.' }),
+  learningStyle: z.array(z.string()).optional(),
+  preferredResourceTypes: z.array(z.string()).optional(),
+  specificTopics: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -44,6 +63,9 @@ export default function CreateRoadmapPage() {
       goals: '',
       expertise: '',
       availableStudyTime: '',
+      learningStyle: [],
+      preferredResourceTypes: [],
+      specificTopics: '',
     },
   });
 
@@ -121,7 +143,7 @@ export default function CreateRoadmapPage() {
         description: "Your new roadmap has been saved to your profile.",
       });
 
-      router.push('/roadmap');
+      router.push(`/roadmap/${roadmapRef.id}`);
 
     } catch (e) {
       setError('Failed to generate roadmap. Please try again.');
@@ -139,7 +161,7 @@ export default function CreateRoadmapPage() {
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onInitialSubmit)}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <FormField
                 control={form.control}
                 name="goals"
@@ -160,7 +182,7 @@ export default function CreateRoadmapPage() {
                   <FormItem>
                     <FormLabel>Current Expertise</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., Some experience with Calculus" {...field} />
+                      <Textarea placeholder="e.g., Some experience with Calculus, basic understanding of derivatives." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -173,12 +195,100 @@ export default function CreateRoadmapPage() {
                   <FormItem>
                     <FormLabel>Available Study Time</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 1 hour per day for 3 months" {...field} />
+                      <Input placeholder="e.g., 5 hours a week for 3 months" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="learningStyle"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Preferred Learning Style(s)</FormLabel>
+                     <FormDescription>Select one or more styles that work best for you.</FormDescription>
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      {learningStyles.map((item) => (
+                        <FormField
+                          key={item.id}
+                          control={form.control}
+                          name="learningStyle"
+                          render={({ field }) => (
+                            <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(item.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), item.id])
+                                      : field.onChange(field.value?.filter((value) => value !== item.id));
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">{item.label}</FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="preferredResourceTypes"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Preferred Resource Types</FormLabel>
+                    <FormDescription>What kind of materials do you prefer?</FormDescription>
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      {resourceTypes.map((item) => (
+                        <FormField
+                          key={item.id}
+                          control={form.control}
+                          name="preferredResourceTypes"
+                          render={({ field }) => (
+                            <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(item.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), item.id])
+                                      : field.onChange(field.value?.filter((value) => value !== item.id));
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">{item.label}</FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+               <FormField
+                control={form.control}
+                name="specificTopics"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Specific Topics to Include/Exclude</FormLabel>
+                     <FormDescription>Are there any topics you definitely want to focus on or skip? (Optional)</FormDescription>
+                    <FormControl>
+                      <Textarea placeholder="e.g., Focus on integration techniques, skip related rates." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
             </CardContent>
             <CardFooter>
               <Button type="submit" disabled={isLoading} className="w-full">
