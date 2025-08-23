@@ -152,7 +152,6 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{userData?.skillsMastered ?? 0} / 25</div>
-            <p className="text-xs text-muted-foreground">+2 this week</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-lg transition-shadow duration-300">
