@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Flame, CheckCircle, Clock, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -162,7 +163,9 @@ export default function DashboardPage() {
         <p className="text-gray-600 dark:text-gray-400 mt-2">Welcome back! Here’s your learning journey at a glance.</p>
         <div className="flex gap-3 mt-4">
           <Button className="bg-blue-600 text-white hover:bg-blue-700">Start Next Lesson</Button>
-          <Button variant="outline">Add Roadmap</Button>
+          <Button variant="outline" asChild>
+            <Link href="/roadmap/create">Add Roadmap</Link>
+          </Button>
         </div>
       </motion.div>
 
