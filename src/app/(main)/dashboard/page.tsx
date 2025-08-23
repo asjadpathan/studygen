@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Flame, CheckCircle, Clock, TrendingUp, Loader2 } from "lucide-react";
+import { Flame, CheckCircle, Clock, TrendingUp, Loader2, BookOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -11,7 +11,6 @@ import { auth, db } from "@/lib/firebase";
 import { collection, doc, onSnapshot, query } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen } from 'lucide-react';
 import Link from "next/link";
 
 const chartData = [
@@ -63,13 +62,14 @@ export default function DashboardPage() {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
+        setLoading(true); // Start loading when user is found
+        
         // Fetch user profile data
         const userDocRef = doc(db, "users", user.uid);
         const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUserData(doc.data() as UserData);
           }
-          setLoading(false);
         });
 
         // Fetch roadmaps and calculate upcoming lessons
@@ -94,8 +94,7 @@ export default function DashboardPage() {
             }
           });
           setUpcomingLessons(lessons);
-          // Set loading to false only after both fetches attempted
-           setLoading(false);
+          setLoading(false); // Set loading to false after all data is fetched
         });
 
         return () => {
@@ -127,13 +126,13 @@ export default function DashboardPage() {
           <Skeleton className="h-5 w-1/2 mt-2" />
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
-          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
-          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-2/3" /><Flame className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-2/3" /><CheckCircle className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-2/3" /><Clock className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <Card className="lg:col-span-3"><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-48 w-full" /></CardContent></Card>
-            <Card className="lg:col-span-2"><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardContent></Card>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+            <Card className="lg:col-span-3"><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+            <Card className="lg:col-span-2"><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent className="space-y-4"><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /></CardContent></Card>
         </div>
       </div>
       )
@@ -142,8 +141,8 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here&apos;s a summary of your progress.</p>
+        <h1 className="text-3xl font-bold font-headline">Welcome Back!</h1>
+        <p className="text-muted-foreground">Here&apos;s a summary of your amazing progress. Keep it up!</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="hover:shadow-lg transition-shadow duration-300">
@@ -153,7 +152,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{userData?.studyStreak ?? 0} days</div>
-            <p className="text-xs text-muted-foreground">Keep up the great work!</p>
+            <p className="text-xs text-muted-foreground">Keep the fire burning!</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-lg transition-shadow duration-300">
@@ -217,18 +216,18 @@ export default function DashboardPage() {
             {upcomingLessons.length > 0 ? (
                  <div className="flex flex-col gap-4">
                     {upcomingLessons.map(lesson => (
-                        <Link href={`/roadmap/${lesson.id}`} key={lesson.id} className="block hover:bg-muted/50 p-2 rounded-md transition-colors">
+                        <Link href={`/roadmap/${lesson.id}`} key={lesson.id} className="block hover:bg-muted/50 p-3 rounded-md transition-colors border">
                             <p className="font-semibold text-primary truncate">{lesson.title}</p>
                             <p className="text-sm text-muted-foreground truncate mb-2">Next: {lesson.nextConcept}</p>
-                            <div className="flex items-center gap-2">
-                                <Progress value={lesson.progress} className="h-2"/>
+                            <div className="flex items-center gap-3">
+                                <Progress value={lesson.progress} className="h-2 flex-1"/>
                                 <span className="text-xs font-semibold text-muted-foreground">{lesson.progress}%</span>
                             </div>
                         </Link>
                     ))}
                  </div>
             ) : (
-                <div className="text-center text-muted-foreground py-8">
+                <div className="text-center text-muted-foreground py-8 flex flex-col items-center justify-center">
                     <BookOpen className="mx-auto h-12 w-12" />
                     <p className="mt-4 font-semibold">No active roadmaps</p>
                     <p className="text-sm">Create a new roadmap to start learning!</p>
