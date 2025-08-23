@@ -29,7 +29,10 @@ const chartConfig = {
 }
 
 interface UserData {
-  studyStreak: number;
+  studyStreak: {
+    count: number;
+    lastUpdate: string;
+  };
   skillsMastered: number;
   timeStudied: number; // in minutes
 }
@@ -141,7 +144,7 @@ export default function DashboardPage() {
             <Flame className="h-5 w-5 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userData?.studyStreak ?? 0} days</div>
+            <div className="text-2xl font-bold">{userData?.studyStreak?.count ?? 0} days</div>
             <p className="text-xs text-muted-foreground">Keep up the great work!</p>
           </CardContent>
         </Card>

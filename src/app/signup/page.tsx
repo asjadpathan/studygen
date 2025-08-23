@@ -79,7 +79,7 @@ export default function SignupPage() {
         await setDoc(userDocRef, {
           email: user.email,
           createdAt: serverTimestamp(),
-          studyStreak: 0,
+          studyStreak: { count: 0, lastUpdate: '' },
           skillsMastered: 0,
           timeStudied: 0,
         });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateQuizAndExplanation, QuizAndExplanationOutput } from '@/ai/flows/active-feedback';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,16 +9,97 @@ import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { doc, getDoc, updateDoc, increment, serverTimestamp, runTransaction } from 'firebase/firestore';
 
 type QuizState = 'loading' | 'ready' | 'answered';
 
+async function updateUserStreak() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const userDocRef = doc(db, 'users', user.uid);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const userDoc = await transaction.get(userDocRef);
+      if (!userDoc.exists()) {
+        console.error("User document does not exist!");
+        return;
+      }
+
+      const userData = userDoc.data();
+      const streakData = userData.studyStreak || { count: 0, lastUpdate: '' };
+      const today = new Date().toISOString().split('T')[0];
+
+      if (streakData.lastUpdate !== today) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        const newStreakCount = streakData.lastUpdate === yesterdayStr ? streakData.count + 1 : 1;
+        
+        transaction.update(userDocRef, {
+          studyStreak: {
+            count: newStreakCount,
+            lastUpdate: today,
+          }
+        });
+      }
+    });
+  } catch (error) {
+    console.error("Failed to update user streak:", error);
+  }
+}
+
 export default function StudyPage() {
+  const [user, setUser] = useState<User | null>(null);
   const [quizData, setQuizData] = useState<QuizAndExplanationOutput | null>(null);
   const [state, setState] = useState<QuizState>('loading');
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [topic, setTopic] = useState('High School Calculus');
+
+  const studyTimeStartRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  const saveStudyTime = useCallback(async () => {
+    if (!user || !studyTimeStartRef.current) return;
+    const endTime = Date.now();
+    const timeSpentSeconds = Math.round((endTime - studyTimeStartRef.current) / 1000);
+    const timeSpentMinutes = Math.ceil(timeSpentSeconds / 60);
+
+    if (timeSpentMinutes > 0) {
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        timeStudied: increment(timeSpentMinutes),
+      });
+    }
+    studyTimeStartRef.current = null;
+  }, [user]);
+
+  useEffect(() => {
+    studyTimeStartRef.current = Date.now();
+
+    const handleBeforeUnload = () => {
+      saveStudyTime();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      saveStudyTime();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [saveStudyTime]);
 
   const fetchQuestion = useCallback(async (isRetry = false, userAnswer?: string, correctAnswer?: string) => {
     setState('loading');
@@ -54,6 +135,8 @@ export default function StudyPage() {
 
   const handleSubmit = async () => {
     if (!selectedAnswer || !quizData) return;
+
+    await updateUserStreak();
 
     setState('answered');
     const correct = selectedAnswer === quizData.correctAnswer;
