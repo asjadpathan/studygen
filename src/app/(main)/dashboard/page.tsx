@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { auth, db } from "@/lib/firebase";
-import { doc, onSnapshot, collection, query } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
@@ -70,7 +70,8 @@ export default function DashboardPage() {
           setLoading(false);
         });
 
-        const roadmapsQuery = query(collection(db, "users", user.uid, "roadmaps"));
+        const roadmapsCollectionRef = collection(db, `users/${user.uid}/roadmaps`);
+        const roadmapsQuery = query(roadmapsCollectionRef);
         const unsubscribeRoadmaps = onSnapshot(roadmapsQuery, (snapshot) => {
           const lessons: UpcomingLesson[] = [];
           snapshot.forEach((doc) => {
