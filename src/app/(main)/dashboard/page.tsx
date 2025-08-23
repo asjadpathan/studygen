@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -80,9 +80,9 @@ export default function DashboardPage() {
           <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
           <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-            <Card><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-48 w-full" /></CardContent></Card>
-            <Card><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardContent></Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <Card className="lg:col-span-3"><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-48 w-full" /></CardContent></Card>
+            <Card className="lg:col-span-2"><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardContent></Card>
         </div>
       </div>
       )
@@ -111,18 +111,18 @@ export default function DashboardPage() {
             <CheckCircle className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userData?.skillsMastered ?? 0} / 25</div>
-            <p className="text-xs text-muted-foreground">+2 this week</p>
+            <div className="text-2xl font-bold">{userData?.skillsMastered ?? 0}</div>
+            <p className="text-xs text-muted-foreground">Total skills acquired</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-lg transition-shadow duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Time Studied (this week)</CardTitle>
+            <CardTitle className="text-sm font-medium">Time Studied</CardTitle>
             <Clock className="h-5 w-5 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatTime(userData?.timeStudied ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">On track with your goals</p>
+            <p className="text-xs text-muted-foreground">Total time invested in learning</p>
           </CardContent>
         </Card>
       </div>
