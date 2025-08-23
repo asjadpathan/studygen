@@ -1,17 +1,15 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
-import { Flame, CheckCircle, Clock, TrendingUp, Loader2, BookOpen } from "lucide-react";
+import { Flame, CheckCircle, Clock, TrendingUp, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { auth, db } from "@/lib/firebase";
-import { collection, doc, onSnapshot, query } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, collection, query } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
 
 const chartData = [
   { month: "January", progress: 65 },
@@ -39,20 +37,15 @@ interface UserData {
 interface Roadmap {
   id: string;
   goals: string;
-  roadmap?: {
-    title: string;
-    concepts: string[];
-  }[];
+  roadmap?: { title: string; concepts: string[] }[];
   completedConcepts?: string[];
 }
 
 interface UpcomingLesson {
-  id: string;
-  title: string;
-  nextConcept: string;
-  progress: number;
+    title: string;
+    progress: number;
+    nextLesson: string;
 }
-
 
 export default function DashboardPage() {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -62,39 +55,36 @@ export default function DashboardPage() {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setLoading(true); // Start loading when user is found
-        
-        // Fetch user profile data
+        // User data snapshot
         const userDocRef = doc(db, "users", user.uid);
         const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUserData(doc.data() as UserData);
           }
+          setLoading(false);
         });
 
-        // Fetch roadmaps and calculate upcoming lessons
+        // Roadmaps snapshot
         const roadmapsQuery = query(collection(db, "users", user.uid, "roadmaps"));
         const unsubscribeRoadmaps = onSnapshot(roadmapsQuery, (snapshot) => {
-          const lessons: UpcomingLesson[] = [];
-          snapshot.forEach(doc => {
-            const roadmap = { id: doc.id, ...doc.data() } as Roadmap;
-            const allConcepts = roadmap.roadmap?.flatMap(m => m.concepts) || [];
-            const completedConcepts = roadmap.completedConcepts || [];
+            const lessons: UpcomingLesson[] = [];
+            snapshot.forEach(doc => {
+                const roadmap = doc.data() as Roadmap;
+                if (roadmap.roadmap && Array.isArray(roadmap.roadmap)) {
+                    const allConcepts = roadmap.roadmap.flatMap(module => module.concepts || []);
+                    const completedConcepts = roadmap.completedConcepts || [];
+                    
+                    const progress = allConcepts.length > 0 ? (completedConcepts.length / allConcepts.length) * 100 : 0;
+                    const nextLesson = allConcepts.find(concept => !completedConcepts.includes(concept)) || "All concepts completed!";
 
-            if (allConcepts.length > 0) {
-              const progress = Math.round((completedConcepts.length / allConcepts.length) * 100);
-              const nextConcept = allConcepts.find(c => !completedConcepts.includes(c));
-
-              lessons.push({
-                id: roadmap.id,
-                title: roadmap.goals,
-                nextConcept: nextConcept || "All concepts completed!",
-                progress: progress,
-              });
-            }
-          });
-          setUpcomingLessons(lessons);
-          setLoading(false); // Set loading to false after all data is fetched
+                    lessons.push({
+                        title: roadmap.goals,
+                        progress: Math.round(progress),
+                        nextLesson: nextLesson,
+                    })
+                }
+            });
+            setUpcomingLessons(lessons);
         });
 
         return () => {
@@ -126,13 +116,13 @@ export default function DashboardPage() {
           <Skeleton className="h-5 w-1/2 mt-2" />
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-2/3" /><Flame className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
-          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-2/3" /><CheckCircle className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
-          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-2/3" /><Clock className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
+          <Card><CardHeader><Skeleton className="h-5 w-2/3" /></CardHeader><CardContent><Skeleton className="h-8 w-1/3" /></CardContent></Card>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-            <Card className="lg:col-span-3"><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>
-            <Card className="lg:col-span-2"><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent className="space-y-4"><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /></CardContent></Card>
+         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="col-span-4"><CardHeader><Skeleton className="h-7 w-1/2"/></CardHeader><CardContent><Skeleton className="h-[300px] w-full"/></CardContent></Card>
+            <Card className="col-span-4 lg:col-span-3"><CardHeader><Skeleton className="h-7 w-1/2"/></CardHeader><CardContent className="space-y-6"><Skeleton className="h-10 w-full"/><Skeleton className="h-10 w-full"/><Skeleton className="h-10 w-full"/></CardContent></Card>
         </div>
       </div>
       )
@@ -141,8 +131,8 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Welcome Back!</h1>
-        <p className="text-muted-foreground">Here&apos;s a summary of your amazing progress. Keep it up!</p>
+        <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
+        <p className="text-muted-foreground">Welcome back! Here&apos;s a summary of your progress.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="hover:shadow-lg transition-shadow duration-300">
@@ -152,7 +142,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{userData?.studyStreak ?? 0} days</div>
-            <p className="text-xs text-muted-foreground">Keep the fire burning!</p>
+            <p className="text-xs text-muted-foreground">Keep up the great work!</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-lg transition-shadow duration-300">
@@ -161,24 +151,24 @@ export default function DashboardPage() {
             <CheckCircle className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userData?.skillsMastered ?? 0}</div>
-            <p className="text-xs text-muted-foreground">Total skills acquired</p>
+            <div className="text-2xl font-bold">{userData?.skillsMastered ?? 0} / 25</div>
+            <p className="text-xs text-muted-foreground">+2 this week</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-lg transition-shadow duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Time Studied</CardTitle>
+            <CardTitle className="text-sm font-medium">Time Studied (this week)</CardTitle>
             <Clock className="h-5 w-5 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatTime(userData?.timeStudied ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">Total time invested in learning</p>
+            <p className="text-xs text-muted-foreground">On track with your goals</p>
           </CardContent>
         </Card>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-        <Card className="lg:col-span-3 hover:shadow-lg transition-shadow duration-300">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4 hover:shadow-lg transition-shadow duration-300">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-headline">
               <TrendingUp className="h-6 w-6" />
@@ -207,32 +197,28 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 hover:shadow-lg transition-shadow duration-300">
+        <Card className="col-span-4 lg:col-span-3 hover:shadow-lg transition-shadow duration-300">
           <CardHeader>
             <CardTitle className="font-headline">Upcoming Lessons</CardTitle>
             <CardDescription>Your next steps in mastering your subjects.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {upcomingLessons.length > 0 ? (
-                 <div className="flex flex-col gap-4">
-                    {upcomingLessons.map(lesson => (
-                        <Link href={`/roadmap/${lesson.id}`} key={lesson.id} className="block hover:bg-muted/50 p-3 rounded-md transition-colors border">
-                            <p className="font-semibold text-primary truncate">{lesson.title}</p>
-                            <p className="text-sm text-muted-foreground truncate mb-2">Next: {lesson.nextConcept}</p>
-                            <div className="flex items-center gap-3">
-                                <Progress value={lesson.progress} className="h-2 flex-1"/>
-                                <span className="text-xs font-semibold text-muted-foreground">{lesson.progress}%</span>
+            <div className="flex flex-col gap-4">
+                {upcomingLessons.length > 0 ? (
+                    upcomingLessons.map((lesson, index) => (
+                        <div key={index}>
+                            <div className="flex justify-between mb-1">
+                            <p className="font-medium truncate pr-4">{lesson.title}</p>
+                            <p className="text-sm text-muted-foreground">{lesson.progress}%</p>
                             </div>
-                        </Link>
-                    ))}
-                 </div>
-            ) : (
-                <div className="text-center text-muted-foreground py-8 flex flex-col items-center justify-center">
-                    <BookOpen className="mx-auto h-12 w-12" />
-                    <p className="mt-4 font-semibold">No active roadmaps</p>
-                    <p className="text-sm">Create a new roadmap to start learning!</p>
-                </div>
-            )}
+                            <Progress value={lesson.progress} />
+                            <p className="text-xs text-muted-foreground mt-1">Next: {lesson.nextLesson}</p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">No active roadmaps. Create one to get started!</p>
+                )}
+            </div>
           </CardContent>
         </Card>
       </div>
