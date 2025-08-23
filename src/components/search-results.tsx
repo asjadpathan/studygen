@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, BookOpen, ExternalLink, HelpCircle, Lightbulb } from 'lucide-react';
-import { SearchForm } from './search-form';
 
 // A simple markdown to HTML converter
 function markdownToHtml(markdown: string) {
@@ -100,7 +99,7 @@ export default function SearchResults() {
         <h1 className="text-3xl font-bold font-headline">Search Results for &quot;{query}&quot;</h1>
         <p className="text-muted-foreground">Here&apos;s what we found to help you learn.</p>
       </div>
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pt-8">
         <div className="lg:col-span-2 space-y-8">
             <Card>
                 <CardHeader>
@@ -153,13 +152,6 @@ export default function SearchResults() {
 
   return (
     <div className="flex flex-col gap-8">
-       <div>
-        <h1 className="text-3xl font-bold font-headline">Search Topics</h1>
-        <p className="text-muted-foreground">Get instant explanations, resources, and quizzes on any subject.</p>
-      </div>
-
-      <SearchForm initialQuery={query ?? ''} />
-
       {isLoading && query && renderSkeleton()}
 
       {error && (
@@ -174,6 +166,13 @@ export default function SearchResults() {
       )}
       
       {results && renderResults()}
+      
+      {!query && !isLoading && (
+        <div>
+            <h1 className="text-3xl font-bold font-headline">Search Topics</h1>
+            <p className="text-muted-foreground">Get instant explanations, resources, and quizzes on any subject using the search bar above.</p>
+        </div>
+      )}
     </div>
   );
 }
