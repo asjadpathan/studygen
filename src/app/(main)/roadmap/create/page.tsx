@@ -18,21 +18,21 @@ import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 const learningStyles = [
-  { id: 'visual', label: 'Visual' },
-  { id: 'auditory', label: 'Auditory' },
-  { id: 'kinesthetic', label: 'Kinesthetic (Hands-on)' },
-  { id: 'reading_writing', label: 'Reading/Writing' },
+  { value: 'visual', label: 'Visual' },
+  { value: 'auditory', label: 'Auditory' },
+  { value: 'kinesthetic', label: 'Kinesthetic (Hands-on)' },
+  { value: 'reading_writing', label: 'Reading/Writing' },
 ];
 
 const resourceTypes = [
-  { id: 'videos', label: 'Videos' },
-  { id: 'articles', label: 'Articles' },
-  { id: 'interactive_labs', label: 'Interactive Labs' },
-  { id: 'books', label: 'Books' },
-  { id: 'projects', label: 'Projects' },
+  { value: 'videos', label: 'Videos' },
+  { value: 'articles', label: 'Articles' },
+  { value: 'interactive_labs', label: 'Interactive Labs' },
+  { value: 'books', label: 'Books' },
+  { value: 'projects', label: 'Projects' },
 ];
 
 const formSchema = z.object({
@@ -205,34 +205,18 @@ export default function CreateRoadmapPage() {
               <FormField
                 control={form.control}
                 name="learningStyle"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Preferred Learning Style(s)</FormLabel>
                      <FormDescription>Select one or more styles that work best for you.</FormDescription>
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      {learningStyles.map((item) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="learningStyle"
-                          render={({ field }) => (
-                            <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...(field.value || []), item.id])
-                                      : field.onChange(field.value?.filter((value) => value !== item.id));
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">{item.label}</FormLabel>
-                            </FormItem>
-                          )}
+                    <FormControl>
+                       <MultiSelect
+                          options={learningStyles}
+                          onValueChange={field.onChange}
+                          defaultValue={field.value || []}
+                          placeholder="Select learning styles..."
                         />
-                      ))}
-                    </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -241,34 +225,18 @@ export default function CreateRoadmapPage() {
               <FormField
                 control={form.control}
                 name="preferredResourceTypes"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Preferred Resource Types</FormLabel>
                     <FormDescription>What kind of materials do you prefer?</FormDescription>
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      {resourceTypes.map((item) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="preferredResourceTypes"
-                          render={({ field }) => (
-                            <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...(field.value || []), item.id])
-                                      : field.onChange(field.value?.filter((value) => value !== item.id));
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">{item.label}</FormLabel>
-                            </FormItem>
-                          )}
+                     <FormControl>
+                       <MultiSelect
+                          options={resourceTypes}
+                          onValueChange={field.onChange}
+                          defaultValue={field.value || []}
+                          placeholder="Select resource types..."
                         />
-                      ))}
-                    </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
