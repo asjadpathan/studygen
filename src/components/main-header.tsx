@@ -118,14 +118,17 @@ export function MainHeader() {
       </Sheet>
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
         <form onSubmit={handleSearch} className="ml-auto flex-1 sm:flex-initial">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="relative flex items-center gap-2">
             <Input
               type="search"
               name="search"
               placeholder="Search topics..."
-              className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
+              className="pr-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
             />
+            <Button type="submit" size="icon" variant="ghost" className="absolute right-0 top-0 h-full w-10">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <span className="sr-only">Search</span>
+            </Button>
           </div>
         </form>
          {loading ? (
