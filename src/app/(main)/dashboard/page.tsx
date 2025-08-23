@@ -8,9 +8,11 @@ import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { auth, db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { collection, doc, onSnapshot, query } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BookOpen } from 'lucide-react';
+import Link from "next/link";
 
 const chartData = [
   { month: "January", progress: 65 },
@@ -35,26 +37,75 @@ interface UserData {
   timeStudied: number; // in minutes
 }
 
+interface Roadmap {
+  id: string;
+  goals: string;
+  roadmap?: {
+    title: string;
+    concepts: string[];
+  }[];
+  completedConcepts?: string[];
+}
+
+interface UpcomingLesson {
+  id: string;
+  title: string;
+  nextConcept: string;
+  progress: number;
+}
+
+
 export default function DashboardPage() {
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [upcomingLessons, setUpcomingLessons] = useState<UpcomingLesson[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
+        // Fetch user profile data
         const userDocRef = doc(db, "users", user.uid);
-        const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+        const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUserData(doc.data() as UserData);
-          } else {
-            // Handle case where user doc doesn't exist
-            console.log("No such document!");
           }
           setLoading(false);
         });
-        return () => unsubscribeSnapshot();
+
+        // Fetch roadmaps and calculate upcoming lessons
+        const roadmapsQuery = query(collection(db, "users", user.uid, "roadmaps"));
+        const unsubscribeRoadmaps = onSnapshot(roadmapsQuery, (snapshot) => {
+          const lessons: UpcomingLesson[] = [];
+          snapshot.forEach(doc => {
+            const roadmap = { id: doc.id, ...doc.data() } as Roadmap;
+            const allConcepts = roadmap.roadmap?.flatMap(m => m.concepts) || [];
+            const completedConcepts = roadmap.completedConcepts || [];
+
+            if (allConcepts.length > 0) {
+              const progress = Math.round((completedConcepts.length / allConcepts.length) * 100);
+              const nextConcept = allConcepts.find(c => !completedConcepts.includes(c));
+
+              lessons.push({
+                id: roadmap.id,
+                title: roadmap.goals,
+                nextConcept: nextConcept || "All concepts completed!",
+                progress: progress,
+              });
+            }
+          });
+          setUpcomingLessons(lessons);
+          // Set loading to false only after both fetches attempted
+           setLoading(false);
+        });
+
+        return () => {
+            unsubscribeUser();
+            unsubscribeRoadmaps();
+        };
+
       } else {
         setUserData(null);
+        setUpcomingLessons([]);
         setLoading(false);
       }
     });
@@ -163,36 +214,26 @@ export default function DashboardPage() {
             <CardDescription>Your next steps in mastering your subjects.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col gap-4">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <p className="font-medium">Calculus: Integration Techniques</p>
-                  <p className="text-sm text-muted-foreground">75%</p>
+            {upcomingLessons.length > 0 ? (
+                 <div className="flex flex-col gap-4">
+                    {upcomingLessons.map(lesson => (
+                        <Link href={`/roadmap/${lesson.id}`} key={lesson.id} className="block hover:bg-muted/50 p-2 rounded-md transition-colors">
+                            <p className="font-semibold text-primary truncate">{lesson.title}</p>
+                            <p className="text-sm text-muted-foreground truncate mb-2">Next: {lesson.nextConcept}</p>
+                            <div className="flex items-center gap-2">
+                                <Progress value={lesson.progress} className="h-2"/>
+                                <span className="text-xs font-semibold text-muted-foreground">{lesson.progress}%</span>
+                            </div>
+                        </Link>
+                    ))}
+                 </div>
+            ) : (
+                <div className="text-center text-muted-foreground py-8">
+                    <BookOpen className="mx-auto h-12 w-12" />
+                    <p className="mt-4 font-semibold">No active roadmaps</p>
+                    <p className="text-sm">Create a new roadmap to start learning!</p>
                 </div>
-                <Progress value={75} />
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <p className="font-medium">Physics: Kinematics</p>
-                  <p className="text-sm text-muted-foreground">40%</p>
-                </div>
-                <Progress value={40} />
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <p className="font-medium">Data Structures: Trees</p>
-                  <p className="text-sm text-muted-foreground">60%</p>
-                </div>
-                <Progress value={60} />
-              </div>
-                 <div>
-                <div className="flex justify-between mb-1">
-                  <p className="font-medium">Machine Learning: Linear Regression</p>
-                  <p className="text-sm text-muted-foreground">20%</p>
-                </div>
-                <Progress value={20} />
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
