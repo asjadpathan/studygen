@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -278,6 +279,12 @@ export default function RoadmapDetailPage() {
       setReviewQuizState('error');
     }
   }, [roadmap?.completedConcepts]);
+
+  useEffect(() => {
+    if (isReviewQuizOpen) {
+      handleStartReviewQuiz();
+    }
+  }, [isReviewQuizOpen, handleStartReviewQuiz]);
 
   const handleSubmitReviewQuiz = () => {
     let score = 0;
@@ -748,10 +755,7 @@ export default function RoadmapDetailPage() {
                 <Button 
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-md"
                   disabled={completedConceptNames.length === 0} 
-                  onClick={() => {
-                      setIsReviewQuizOpen(true);
-                      handleStartReviewQuiz();
-                  }}
+                  onClick={() => setIsReviewQuizOpen(true)}
                 >
                   Start Review Quiz
                 </Button>
@@ -825,3 +829,4 @@ export default function RoadmapDetailPage() {
     </div>
   );
 }
+
