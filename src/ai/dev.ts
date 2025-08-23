@@ -6,3 +6,4 @@ import '@/ai/flows/personalized-roadmap.ts';
 import '@/ai/flows/active-feedback.ts';
 import '@/ai/flows/skill-assessment.ts';
 import '@/ai/flows/search-topic.ts';
+import '@/ai/flows/process-material.ts';
