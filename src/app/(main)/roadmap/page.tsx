@@ -154,7 +154,7 @@ export default function RoadmapListPage() {
                       <AccordionTrigger>{item.title}</AccordionTrigger>
                       <AccordionContent>
                          <Accordion type="single" collapsible className="w-full pl-4">
-                            {item.concepts.map((concept, conceptIndex) => (
+                            {Array.isArray(item.concepts) && item.concepts.map((concept, conceptIndex) => (
                                 <AccordionItem value={`concept-${conceptIndex}`} key={conceptIndex}>
                                     <AccordionTrigger 
                                         className="text-sm"
