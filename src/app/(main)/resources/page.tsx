@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, AlertTriangle, Compass, Newspaper, Trophy, ExternalLink } from 'lucide-react';
+import { Loader2, AlertTriangle, Compass, Newspaper, Trophy, ExternalLink, Pencil } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 
 const industries = [
@@ -35,6 +35,7 @@ export default function ResourcesPage() {
   const [results, setResults] = useState<FindResourcesOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,6 +52,7 @@ export default function ResourcesPage() {
     try {
       const result = await findResources(values);
       setResults(result);
+      setIsEditing(false);
     } catch (e) {
       setError('Failed to find resources. Please try again.');
       console.error(e);
@@ -77,65 +79,89 @@ export default function ResourcesPage() {
         <h1 className="text-3xl font-bold font-headline">Resources</h1>
         <p className="text-muted-foreground">Discover resources, competitions, and news tailored to your interests.</p>
       </div>
-      <Card className="max-w-2xl mx-auto w-full">
-        <CardHeader>
-          <CardTitle className="font-headline">Select Your Interests</CardTitle>
-          <CardDescription>Choose the industries you&apos;re passionate about to find relevant content.</CardDescription>
-        </CardHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="interests"
-                render={() => (
-                  <FormItem>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {industries.map((item) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="interests"
-                          render={({ field }) => {
-                            return (
-                              <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(item.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, item.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== item.id
+
+      {isEditing ? (
+        <Card className="max-w-2xl mx-auto w-full">
+          <CardHeader>
+            <CardTitle className="font-headline">Select Your Interests</CardTitle>
+            <CardDescription>Choose the industries you&apos;re passionate about to find relevant content.</CardDescription>
+          </CardHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="interests"
+                  render={() => (
+                    <FormItem>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {industries.map((item) => (
+                          <FormField
+                            key={item.id}
+                            control={form.control}
+                            name="interests"
+                            render={({ field }) => {
+                              return (
+                                <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(item.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, item.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== item.id
+                                              )
                                             )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {item.label}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {item.label}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" disabled={isLoading} className="w-full">
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Find Resources
+                </Button>
+              </CardFooter>
+            </form>
+          </Form>
+        </Card>
+      ) : (
+         <Card className="max-w-2xl mx-auto w-full">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="font-headline">Your Interests</CardTitle>
+                    <CardDescription>Here are the interests you selected.</CardDescription>
+                </div>
+                <Button variant="outline" onClick={() => setIsEditing(true)}>
+                    <Pencil className="mr-2 h-4 w-4"/>
+                    Edit Interests
+                </Button>
+            </CardHeader>
+            <CardContent>
+                 <div className="flex flex-wrap gap-2">
+                    {form.getValues('interests').map(interestId => {
+                        const interest = industries.find(i => i.id === interestId);
+                        return <Badge key={interestId} variant="secondary">{interest?.label || interestId}</Badge>
+                    })}
+                </div>
             </CardContent>
-            <CardFooter>
-              <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Find Resources
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </Card>
+         </Card>
+      )}
 
       {isLoading && (
         <div className="space-y-8">
