@@ -21,8 +21,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
-import { Badge } from '@/components/ui/badge';
-
 
 const learningStyles = [
   { id: 'visual', label: 'Visual', color: 'from-blue-500 to-cyan-500' },
@@ -229,61 +227,68 @@ export default function CreateRoadmapPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="learningStyle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Learning Style(s)</FormLabel>
-                     <FormDescription className="text-gray-600 dark:text-gray-400">
-                      Select one or more styles that work best for you.
-                    </FormDescription>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        {learningStyles.map((item) => {
-                          const isSelected = field.value?.includes(item.id);
-                          return (
-                            <div 
-                              key={item.id}
-                              className={`rounded-xl p-4 border-2 cursor-pointer transition-all ${isSelected
+              <FormItem>
+                <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Learning Style(s)</FormLabel>
+                <FormDescription className="text-gray-600 dark:text-gray-400">
+                  Select one or more styles that work best for you.
+                </FormDescription>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {learningStyles.map((item) => (
+                    <FormField
+                      key={item.id}
+                      control={form.control}
+                      name="learningStyle"
+                      render={({ field }) => {
+                        const isSelected = field.value?.includes(item.id);
+                        return (
+                          <FormItem key={item.id} className="flex-1">
+                            <FormControl>
+                              <div
+                                className={`rounded-xl p-4 border-2 cursor-pointer transition-all ${isSelected
                                   ? `border-transparent bg-gradient-to-r ${item.color} text-white shadow-md`
                                   : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-gray-700'}`
-                              }
-                              onClick={() => {
-                                const newValue = isSelected
-                                  ? field.value?.filter((value) => value !== item.id)
-                                  : [...(field.value || []), item.id];
-                                field.onChange(newValue);
-                              }}
-                            >
-                              <div className="flex items-center gap-3">
-                                <Checkbox
-                                  checked={isSelected}
-                                  className={`${isSelected ? 'border-white bg-white/20' : ''}`}
-                                />
-                                <FormLabel className="font-normal cursor-pointer text-current">
-                                  {item.label}
-                                </FormLabel>
+                                }
+                                onClick={() => {
+                                  const newValue = isSelected
+                                    ? field.value?.filter((value) => value !== item.id)
+                                    : [...(field.value || []), item.id];
+                                  field.onChange(newValue);
+                                }}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <Checkbox
+                                    checked={isSelected}
+                                    readOnly // The div handles the click
+                                    className={`${isSelected ? 'border-white bg-white/20' : ''}`}
+                                  />
+                                  <FormLabel className="font-normal cursor-pointer text-current">
+                                    {item.label}
+                                  </FormLabel>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                            </FormControl>
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
 
-              <FormField
-                control={form.control}
-                name="preferredResourceTypes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Resource Types</FormLabel>
-                    <FormDescription className="text-gray-600 dark:text-gray-400">
-                      What kind of materials do you prefer?
-                    </FormDescription>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        {resourceTypes.map((item) => (
+              <FormItem>
+                <FormLabel className="text-gray-900 dark:text-gray-100">Preferred Resource Types</FormLabel>
+                <FormDescription className="text-gray-600 dark:text-gray-400">
+                  What kind of materials do you prefer?
+                </FormDescription>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {resourceTypes.map((item) => (
+                    <FormField
+                      key={item.id}
+                      control={form.control}
+                      name="preferredResourceTypes"
+                      render={({ field }) => {
+                        return (
                           <FormItem
                             key={item.id}
                             className="flex flex-row items-center space-x-3 space-y-0"
@@ -298,21 +303,21 @@ export default function CreateRoadmapPage() {
                                         field.value?.filter(
                                           (value) => value !== item.id
                                         )
-                                      )
+                                      );
                                 }}
                               />
                             </FormControl>
                             <FormLabel className="font-normal flex items-center gap-2">
-                               <span className="text-lg">{item.icon}</span> {item.label}
+                              <span className="text-lg">{item.icon}</span> {item.label}
                             </FormLabel>
                           </FormItem>
-                        ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+                        );
+                      }}
+                    />
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
 
               <FormField
                 control={form.control}
