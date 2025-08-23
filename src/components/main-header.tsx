@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CircleUser, Menu, Search, GraduationCap, LayoutDashboard, Compass, GitMerge, BrainCircuit, Upload, Loader2 } from "lucide-react";
+import { CircleUser, Menu, Search, GraduationCap, LayoutDashboard, Compass, GitMerge, BrainCircuit, Upload, Loader2, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,10 +22,11 @@ import { useEffect, useState } from "react";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/resources", label: "Resources", icon: Compass },
   { href: "/roadmap", label: "My Roadmap", icon: GitMerge },
   { href: "/study", label: "Study Zone", icon: BrainCircuit },
   { href: "/upload", label: "Upload Material", icon: Upload },
+  { href: "/resources", label: "Resources", icon: Compass },
+  { href: "/saved-resources", label: "Saved", icon: Bookmark },
 ];
 
 export function MainHeader() {
@@ -72,7 +73,7 @@ export function MainHeader() {
                 href={item.href}
                 className={cn(
                     "transition-colors hover:text-foreground",
-                    pathname === item.href ? "text-foreground" : "text-muted-foreground"
+                    pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
                 )}
             >
              {item.label}
@@ -105,7 +106,7 @@ export function MainHeader() {
                     href={item.href}
                      className={cn(
                         "hover:text-foreground",
-                        pathname === item.href ? "text-foreground" : "text-muted-foreground"
+                        pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
                     )}
                 >
                 {item.label}
