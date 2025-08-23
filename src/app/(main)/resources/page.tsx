@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, updateDoc, setDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, serverTimestamp, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const industries = [
