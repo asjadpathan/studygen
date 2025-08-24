@@ -1,10 +1,20 @@
-
-
-"use client"
+"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CircleUser, Menu, Search, GraduationCap, LayoutDashboard, Compass, GitMerge, BrainCircuit, Upload, Loader2, Bookmark } from "lucide-react";
+import {
+  CircleUser,
+  Menu,
+  Search,
+  GraduationCap,
+  Compass,
+  GitMerge,
+  BrainCircuit,
+  Upload,
+  Loader2,
+  Bookmark,
+  LogOut,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,10 +32,9 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
 
 const menuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/roadmap", label: "My Roadmap", icon: GitMerge },
-  { href: "/study", label: "Study Zone", icon: BrainCircuit },
-  { href: "/upload", label: "Upload Material", icon: Upload },
+  { href: "/roadmap", label: "Roadmap", icon: GitMerge },
+  { href: "/study", label: "Study", icon: BrainCircuit },
+  { href: "/upload", label: "Upload", icon: Upload },
   { href: "/resources", label: "Resources", icon: Compass },
   { href: "/saved-resources", label: "Saved", icon: Bookmark },
 ];
@@ -55,102 +64,110 @@ export function MainHeader() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push('/login');
+    router.push("/login");
   };
 
   return (
-    <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-10">
-      <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 text-lg font-semibold md:text-base"
-        >
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+      <div className="flex h-16 items-center justify-between px-4">
+        {/* Logo (no link) */}
+        <div className="flex items-center gap-2">
           <GraduationCap className="h-6 w-6" />
-          <span className="sr-only">StudyGen</span>
-        </Link>
-        {menuItems.map(item => (
+          <span className="font-bold text-lg">StudyGen</span>
+        </div>
+
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-6">
+          {menuItems.map((item) => (
             <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                    "transition-colors hover:text-foreground",
-                    pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
-                )}
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                pathname.startsWith(item.href)
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              )}
             >
-             {item.label}
+              {item.label}
             </Link>
-        ))}
-      </nav>
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left">
-          <nav className="grid gap-6 text-lg font-medium">
-            <Link
-              href="#"
-              className="flex items-center gap-2 text-lg font-semibold"
-            >
+          ))}
+        </nav>
+
+        {/* Mobile Menu */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left">
+            <div className="flex items-center gap-2 mb-6">
               <GraduationCap className="h-6 w-6" />
-              <span className="sr-only">StudyGen</span>
-            </Link>
-             {menuItems.map(item => (
-                <Link
+              <span className="font-bold">StudyGen</span>
+            </div>
+            <nav className="flex flex-col gap-4">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
                     key={item.href}
                     href={item.href}
-                     className={cn(
-                        "hover:text-foreground",
-                        pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
+                    className={cn(
+                      "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
+                      pathname.startsWith(item.href)
+                        ? "text-foreground"
+                        : "text-muted-foreground"
                     )}
-                >
-                {item.label}
-                </Link>
-            ))}
-          </nav>
-        </SheetContent>
-      </Sheet>
-      <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        <form onSubmit={handleSearch} className="ml-auto flex-1 sm:flex-initial">
-          <div className="relative flex items-center gap-2">
-            <Input
-              type="search"
-              name="search"
-              placeholder="Search topics..."
-              className="pr-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
-            />
-            <Button type="submit" size="icon" variant="ghost" className="absolute right-0 top-0 h-full w-10">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <span className="sr-only">Search</span>
-            </Button>
-          </div>
-        </form>
-         {loading ? (
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </SheetContent>
+        </Sheet>
+
+        {/* Right Side Actions */}
+        <div className="flex items-center gap-4">
+          {/* Search */}
+          <form onSubmit={handleSearch} className="hidden sm:block">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                name="search"
+                placeholder="Search..."
+                className="pl-8 w-[200px] lg:w-[250px]"
+              />
+            </div>
+          </form>
+
+          {/* User Menu */}
+          {loading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-         )}
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                  <CircleUser className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem>Support</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
     </header>
   );
