@@ -11,33 +11,21 @@ import {
   BarChart3,
   Clock,
   CheckCircle,
-  Rocket,
   Star,
-  ChevronRight,
-  Bookmark,
-  Lightbulb,
-  Shield,
-  Globe,
-  Heart,
   Zap,
-  BookText,
-  NotebookPen,
-  Brain,
-  Bot,
+  Globe,
   MessageSquare,
+  Heart,
+  Brain,
   TrendingUp,
-  Calendar,
-  Award,
   Search,
-  Library,
-  Puzzle
+  Shield,
+  BookText
 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from './ui/button';
-import { Logo } from './logo';
 
-// Reusable Feature Card
+// Reusable Feature Card Component
 const FeatureCard = ({
   icon,
   title,
@@ -66,16 +54,13 @@ const FeatureCard = ({
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay }}
       viewport={{ once: true, amount: 0.8 }}
-      className="group relative bg-white dark:bg-gray-800 p-6 rounded-2xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col items-start overflow-hidden"
+      className="group bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center"
     >
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-      <div className="relative z-10">
-        <div className={`p-3 rounded-xl bg-gradient-to-r ${colorMap[color]} text-white mb-4 group-hover:scale-110 transition-transform duration-300`}>
-          {icon}
-        </div>
-        <h3 className="text-xl font-bold font-headline mb-3 text-gray-900 dark:text-gray-100">{title}</h3>
-        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{description}</p>
+      <div className={`p-4 rounded-xl bg-gradient-to-r ${colorMap[color]} text-white mb-6 group-hover:scale-110 transition-transform duration-300`}>
+        {icon}
       </div>
+      <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">{title}</h3>
+      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{description}</p>
     </motion.div>
   );
 };
@@ -87,9 +72,9 @@ const StatCard = ({ number, label, icon, delay }: { number: string; label: strin
     whileInView={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay }}
     viewport={{ once: true }}
-    className="text-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-0"
+    className="text-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg"
   >
-    <div className="flex justify-center mb-3">
+    <div className="flex justify-center mb-4">
       <div className="p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
         {icon}
       </div>
@@ -106,16 +91,14 @@ const TestimonialCard = ({ name, role, content, delay }: { name: string; role: s
     whileInView={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay }}
     viewport={{ once: true }}
-    className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border-0"
+    className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg text-center"
   >
-    <div className="flex items-center mb-4">
-      <div className="flex items-center gap-2">
-        {[...Array(5)].map((_, i) => (
-          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-        ))}
-      </div>
+    <div className="flex justify-center mb-4">
+      {[...Array(5)].map((_, i) => (
+        <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400 mx-0.5" />
+      ))}
     </div>
-    <p className="text-gray-700 dark:text-gray-300 mb-4 italic">"{content}"</p>
+    <p className="text-gray-700 dark:text-gray-300 mb-6 italic">"{content}"</p>
     <div>
       <p className="font-semibold text-gray-900 dark:text-gray-100">{name}</p>
       <p className="text-sm text-gray-600 dark:text-gray-400">{role}</p>
@@ -128,8 +111,8 @@ export function LandingPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-gray-200/50 dark:border-gray-800/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg">
-        <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
+          <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
               <Brain className="h-6 w-6" />
             </div>
@@ -152,14 +135,14 @@ export function LandingPage() {
 
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative overflow-hidden py-20 md:py-32">
+        <section className="relative overflow-hidden py-16 md:py-24">
           {/* Background Elements */}
-          <div className="absolute top-0 left-1/4 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
-          <div className="absolute top-0 right-1/4 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
+          <div className="absolute top-10 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
+          <div className="absolute top-10 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
           <div className="absolute bottom-10 left-20 w-72 h-72 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
 
-          <div className="container relative z-10">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
               {/* Hero Text */}
               <motion.div
                 initial={{ opacity: 0, x: -60 }}
@@ -173,7 +156,7 @@ export function LandingPage() {
                     StudyGen
                   </span>
                 </h1>
-                <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-xl mx-auto lg:mx-0">
+                <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-xl">
                   Our platform uses cutting-edge AI to create personalized roadmaps, quizzes, and resources to accelerate your learning journey.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -209,9 +192,9 @@ export function LandingPage() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="relative"
+                className="relative flex justify-center"
               >
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-2xl border-0">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-2xl max-w-md">
                   <div className="relative">
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25"></div>
                     <div className="relative bg-gray-100 dark:bg-gray-700 rounded-2xl p-4">
@@ -230,19 +213,19 @@ export function LandingPage() {
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Floating Elements */}
-                <div className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border-0">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-sm font-medium">Goal Achieved</span>
+                  
+                  {/* Floating Elements */}
+                  <div className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span className="text-sm font-medium">Goal Achieved</span>
+                    </div>
                   </div>
-                </div>
-                <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border-0">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-blue-500" />
-                    <span className="text-sm font-medium">+87% Progress</span>
+                  <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-blue-500" />
+                      <span className="text-sm font-medium">+87% Progress</span>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -252,8 +235,8 @@ export function LandingPage() {
 
         {/* Stats Section */}
         <section className="py-16 bg-white dark:bg-gray-800">
-          <div className="container">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
               <StatCard number="50K+" label="Active Learners" icon={<Users size={24} />} delay={0.1} />
               <StatCard number="200K+" label="Study Hours" icon={<Clock size={24} />} delay={0.2} />
               <StatCard number="95%" label="Success Rate" icon={<Target size={24} />} delay={0.3} />
@@ -264,19 +247,19 @@ export function LandingPage() {
 
         {/* Features Section */}
         <section id="features" className="py-24">
-          <div className="container">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="text-center max-w-3xl mx-auto mb-16"
+              className="max-w-3xl mx-auto text-center mb-16"
             >
               <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-full mb-4">
                 <Sparkles className="h-4 w-4" />
                 <span className="text-sm font-medium">Why Choose StudyGen?</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold font-headline mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Transform Your Learning Experience
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400">
@@ -284,7 +267,7 @@ export function LandingPage() {
               </p>
             </motion.div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               <FeatureCard
                 icon={<BrainCircuit size={24} />}
                 title="Personalized Roadmaps"
@@ -333,15 +316,15 @@ export function LandingPage() {
 
         {/* Testimonials Section */}
         <section className="py-24 bg-white dark:bg-gray-800">
-          <div className="container">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="text-center max-w-3xl mx-auto mb-16"
+              className="max-w-3xl mx-auto text-center mb-16"
             >
-              <h2 className="text-3xl md:text-4xl font-bold font-headline mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 What Our Learners Say
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400">
@@ -349,7 +332,7 @@ export function LandingPage() {
               </p>
             </motion.div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               <TestimonialCard
                 name="Sarah Johnson"
                 role="Medical Student"
@@ -375,15 +358,15 @@ export function LandingPage() {
         {/* CTA Section */}
         <section className="py-24 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-5"></div>
-          <div className="container relative z-10 text-center">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="max-w-2xl mx-auto"
+              className="max-w-3xl mx-auto text-center"
             >
-              <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
                 Ready to Start Learning Smarter?
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
@@ -406,8 +389,8 @@ export function LandingPage() {
 
       {/* Footer */}
       <footer className="py-12 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-        <div className="container">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
@@ -448,7 +431,7 @@ export function LandingPage() {
             </div>
           </div>
           
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <div className="max-w-6xl mx-auto border-t border-gray-200 dark:border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-600 dark:text-gray-400 mb-4 md:mb-0">
               &copy; {new Date().getFullYear()} StudyGen. All rights reserved.
             </p>
