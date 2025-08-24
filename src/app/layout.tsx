@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'StudyGenius',
+  title: 'StudyGen',
   description: 'Personalized AI-powered learning platform',
 };
 

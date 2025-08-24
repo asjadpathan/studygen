@@ -121,7 +121,7 @@ export default function SignupPage() {
             Create an Account
           </CardTitle>
           <CardDescription className="text-center">
-            Start your learning journey with StudyGenius today!
+            Start your learning journey with StudyGen today!
           </CardDescription>
         </CardHeader>
         <CardContent>

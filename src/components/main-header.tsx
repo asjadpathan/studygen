@@ -66,7 +66,7 @@ export function MainHeader() {
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
           <GraduationCap className="h-6 w-6" />
-          <span className="sr-only">StudyGenius</span>
+          <span className="sr-only">StudyGen</span>
         </Link>
         {menuItems.map(item => (
             <Link
@@ -99,7 +99,7 @@ export function MainHeader() {
               className="flex items-center gap-2 text-lg font-semibold"
             >
               <GraduationCap className="h-6 w-6" />
-              <span className="sr-only">StudyGenius</span>
+              <span className="sr-only">StudyGen</span>
             </Link>
              {menuItems.map(item => (
                 <Link
