@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,8 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -36,7 +37,7 @@ const formSchema = z.object({
     .min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-export default function SignupPage() {
+export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -53,6 +54,7 @@ export default function SignupPage() {
     return () => unsubscribe();
   }, [router]);
 
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,19 +66,18 @@ export default function SignupPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(
+      const userCredential = await signInWithEmailAndPassword(
         auth,
         values.email,
         values.password
       );
       const user = userCredential.user;
 
+      // Check if user exists in Firestore, if not create them
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
-
       if (!userDoc.exists()) {
-        // Create a user document in Firestore
-        await setDoc(userDocRef, {
+         await setDoc(userDocRef, {
           email: user.email,
           createdAt: serverTimestamp(),
           studyStreak: { count: 0, lastUpdate: '' },
@@ -84,24 +85,19 @@ export default function SignupPage() {
           timeStudied: 0,
         });
       }
-
-      toast({
-        title: 'Account Created',
-        description: "You're now logged in and being redirected to your dashboard.",
-      });
-
+      
       // The useEffect will handle the redirect
-
+      
     } catch (error: any) {
       toast({
-        title: 'Sign-up Failed',
-        description: error.message,
+        title: 'Login Failed',
+        description: 'Invalid email or password. Please try again.',
         variant: 'destructive',
       });
-       setIsLoading(false);
-    }
+      setIsLoading(false);
+    } 
   }
-  
+
   if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -118,10 +114,11 @@ export default function SignupPage() {
             <Logo />
           </Link>
           <CardTitle className="text-3xl font-bold text-center font-headline">
-            Create an Account
+            Welcome Back
           </CardTitle>
           <CardDescription className="text-center">
-            Start your learning journey with StudyGenius today!
+            Enter your credentials to access your personalized learning
+            dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -150,7 +147,16 @@ export default function SignupPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                     <FormLabel>Password</FormLabel>
+                    <div className="flex items-center">
+                      <FormLabel>Password</FormLabel>
+                      <Link
+                        href="#"
+                        className="ml-auto inline-block text-sm underline"
+                        prefetch={false}
+                      >
+                        Forgot your password?
+                      </Link>
+                    </div>
                     <FormControl>
                       <Input
                         id="password"
@@ -164,15 +170,15 @@ export default function SignupPage() {
               />
               <Button type="submit" className="w-full font-bold" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign Up
+                Login
               </Button>
             </form>
           </Form>
 
           <div className="mt-4 text-center text-sm">
-            Already have an account?{' '}
-            <Link href="/login" className="underline" prefetch={false}>
-              Login
+            Don&apos;t have an account?{' '}
+            <Link href="/signup" className="underline" prefetch={false}>
+              Sign up
             </Link>
           </div>
         </CardContent>
