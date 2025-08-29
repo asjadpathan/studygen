@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './ui/button';
+import { Logo } from './logo';
 
 // Reusable Feature Card Component
 const FeatureCard = ({
@@ -126,14 +127,9 @@ export function LandingPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-gray-200/50 dark:border-gray-800/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-              <Brain className="h-6 w-6" />
-            </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-              StudyGenius
-            </span>
-          </div>
+          <Link href="/" className="flex items-center gap-3">
+             <Logo />
+          </Link>
           <nav className="flex items-center gap-4">
             <Button variant="ghost" asChild className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
               <Link href="/login">Login</Link>
@@ -176,7 +172,7 @@ export function LandingPage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                   <Button size="lg" asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg">
                     <Link href="/signup">
-                      Launch StudyGenius <Sparkles className="ml-2 h-4 w-4" />
+                      Launch StudyGen <Sparkles className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button size="lg" variant="outline" asChild className="border-gray-300 dark:border-gray-700">
@@ -328,7 +324,7 @@ export function LandingPage() {
               >
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-600 dark:text-blue-400 px-6 py-3 rounded-full mb-6">
                   <Sparkles className="h-5 w-5" />
-                  <span className="font-medium">StudyGenius Solution</span>
+                  <span className="font-medium">StudyGen Solution</span>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
                   Meet Your AI Learning Companion
@@ -354,7 +350,7 @@ export function LandingPage() {
                 className="text-center mb-16"
               >
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  See StudyGenius in Action
+                  See StudyGen in Action
                 </h2>
                 <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                   Watch how our AI creates a personalized learning roadmap in seconds
@@ -449,7 +445,7 @@ export function LandingPage() {
             >
               <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-full mb-4">
                 <Sparkles className="h-4 w-4" />
-                <span className="text-sm font-medium">Why Choose StudyGenius?</span>
+                <span className="text-sm font-medium">Why Choose StudyGen?</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Transform Your Learning Experience
@@ -520,7 +516,7 @@ export function LandingPage() {
                 What Our Learners Say
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400">
-                Join thousands of students who have transformed their learning journey with StudyGenius.
+                Join thousands of students who have transformed their learning journey with StudyGen.
               </p>
             </motion.div>
             
@@ -528,7 +524,7 @@ export function LandingPage() {
               <TestimonialCard
                 name="Sarah Johnson"
                 role="Medical Student"
-                content="StudyGenius completely transformed how I prepare for exams. The AI-generated roadmaps helped me focus on exactly what I needed to learn, and I saw a 40% improvement in my test scores."
+                content="StudyGen completely transformed how I prepare for exams. The AI-generated roadmaps helped me focus on exactly what I needed to learn, and I saw a 40% improvement in my test scores."
                 delay={0.1}
               />
               <TestimonialCard
@@ -540,7 +536,7 @@ export function LandingPage() {
               <TestimonialCard
                 name="Emily Rodriguez"
                 role="University Student"
-                content="I've tried many learning platforms, but StudyGenius's personalized approach and collaborative features are unmatched. It's like having a personal tutor and study group combined."
+                content="I've tried many learning platforms, but StudyGen's personalized approach and collaborative features are unmatched. It's like having a personal tutor and study group combined."
                 delay={0.3}
               />
             </div>
@@ -614,54 +610,23 @@ export function LandingPage() {
       {/* Footer */}
       <footer className="py-12 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                  <Brain className="h-6 w-6" />
-                </div>
-                <span className="text-xl font-bold">StudyGenius</span>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Transforming education with AI-powered personalized learning experiences that adapt to every learner's unique journey.
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="text-center md:text-left">
+              <Link href="/" className="flex items-center justify-center md:justify-start gap-2 mb-4">
+                 <Logo />
+              </Link>
+              <p className="text-gray-600 dark:text-gray-400">
+                &copy; {new Date().getFullYear()} StudyGen. All rights reserved.
               </p>
             </div>
             
-            <div>
-              <h3 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">Product</h3>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
-                <li><Link href="#features" className="hover:text-blue-600 transition-colors">Features</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">Pricing</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">Roadmap</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">API</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">Company</h3>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">About</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">Careers</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">Contact</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">Blog</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">Legal</h3>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">Privacy Policy</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">Terms of Service</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">Cookie Policy</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition-colors">GDPR</Link></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="max-w-6xl mx-auto border-t border-gray-200 dark:border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-4 md:mb-0">
-              &copy; {new Date().getFullYear()} StudyGenius. All rights reserved. Made with 🧠 AI and ❤️ Human creativity.
-            </p>
+            <nav className="flex flex-wrap gap-x-6 gap-y-2 justify-center md:justify-start">
+                <Link href="#features" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors">Features</Link>
+                <Link href="/login" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors">Login</Link>
+                <Link href="/signup" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors">Sign Up</Link>
+                <Link href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors">Contact</Link>
+            </nav>
+
             <div className="flex gap-4">
               <Link href="#" className="text-gray-400 hover:text-blue-600 transition-colors">
                 <Globe className="h-5 w-5" />
