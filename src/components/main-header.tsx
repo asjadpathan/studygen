@@ -30,8 +30,10 @@ import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
+import { Logo } from "./logo";
 
 const menuItems = [
+  { href: "/dashboard", label: "Dashboard", icon: BrainCircuit },
   { href: "/roadmap", label: "Roadmap", icon: GitMerge },
   { href: "/study", label: "Study", icon: BrainCircuit },
   { href: "/upload", label: "Upload", icon: Upload },
@@ -70,11 +72,10 @@ export function MainHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="flex h-16 items-center justify-between px-4">
-        {/* Logo (no link) */}
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-6 w-6" />
-          <span className="font-bold text-lg">StudyGen</span>
-        </div>
+        <Link href="/dashboard">
+            <Logo />
+        </Link>
+        
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
@@ -103,8 +104,7 @@ export function MainHeader() {
           </SheetTrigger>
           <SheetContent side="left">
             <div className="flex items-center gap-2 mb-6">
-              <GraduationCap className="h-6 w-6" />
-              <span className="font-bold">StudyGen</span>
+              <Logo />
             </div>
             <nav className="flex flex-col gap-4">
               {menuItems.map((item) => {
