@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -197,46 +198,44 @@ export default function ResourcesPage() {
                         <FormField
                           control={form.control}
                           name="interests"
-                          render={() => (
+                          render={({ field }) => (
                             <FormItem>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {industries.map((item) => (
-                                  <FormField
-                                    key={item.id}
-                                    control={form.control}
-                                    name="interests"
-                                    render={({ field }) => {
-                                      const isSelected = field.value?.includes(item.id);
-                                      return (
-                                        <FormItem key={item.id} className="relative">
-                                          <FormControl>
-                                            <div 
-                                              className={`rounded-xl p-4 border-2 cursor-pointer transition-all ${isSelected 
-                                                ? `border-transparent bg-gradient-to-r ${item.color} text-white shadow-md` 
-                                                : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'}`}
-                                              onClick={() => {
-                                                return isSelected
-                                                  ? field.onChange(field.value?.filter((value) => value !== item.id))
-                                                  : field.onChange([...field.value, item.id])
-                                              }}
-                                            >
-                                              <div className="flex items-center gap-3">
-                                                <Checkbox
-                                                  checked={isSelected}
-                                                  className={`${isSelected ? 'border-white bg-white/20' : ''}`}
-                                                  onClick={(e) => e.stopPropagation()}
-                                                />
-                                                <FormLabel className="font-normal cursor-pointer">
-                                                  {item.label}
-                                                </FormLabel>
-                                              </div>
-                                            </div>
-                                          </FormControl>
-                                        </FormItem>
-                                      )
-                                    }}
-                                  />
-                                ))}
+                                {industries.map((item) => {
+                                  const isSelected = field.value?.includes(item.id);
+                                  return (
+                                    <label
+                                      key={item.id}
+                                      className={`rounded-xl p-4 border-2 cursor-pointer transition-all ${
+                                        isSelected
+                                          ? `border-transparent bg-gradient-to-r ${item.color} text-white shadow-md`
+                                          : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <Checkbox
+                                          checked={isSelected}
+                                          onCheckedChange={(checked) => {
+                                            const currentValue = field.value || [];
+                                            if (checked) {
+                                              field.onChange([...currentValue, item.id]);
+                                            } else {
+                                              field.onChange(
+                                                currentValue.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              );
+                                            }
+                                          }}
+                                          className={`${isSelected ? 'border-white bg-white/20' : ''}`}
+                                        />
+                                        <FormLabel className="font-normal cursor-pointer">
+                                          {item.label}
+                                        </FormLabel>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
                               </div>
                               <FormMessage />
                             </FormItem>
@@ -429,3 +428,5 @@ export default function ResourcesPage() {
     </div>
   );
 }
+
+    
