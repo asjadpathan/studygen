@@ -6,13 +6,10 @@ export function Logo() {
       <Image
         src="/logo.png"
         alt="StudyGen Logo"
-        width={32}
+        width={100}
         height={32}
-        className="h-8 w-8"
+        className="h-8 w-auto"
       />
-      <span className="text-2xl font-bold font-headline text-primary">
-        StudyGen
-      </span>
     </div>
   );
 }
