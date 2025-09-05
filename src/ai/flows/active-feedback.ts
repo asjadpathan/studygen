@@ -12,8 +12,9 @@ import {z} from 'genkit';
 
 const QuizAndExplanationInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate a quiz.'),
-  userAnswer: z.string().optional().describe('The user\'s answer to the quiz question, if available.'),
+  userAnswer: z.string().optional().describe("The user's answer to the quiz question, if available."),
   correctAnswer: z.string().optional().describe('The correct answer to the quiz question, if available.'),
+  context: z.string().optional().describe('Additional context for the question generation, e.g. "Question 1 of 3" or "Ask a different kind of question".'),
 });
 export type QuizAndExplanationInput = z.infer<typeof QuizAndExplanationInputSchema>;
 
@@ -36,7 +37,9 @@ const prompt = ai.definePrompt({
   input: {schema: QuizAndExplanationInputSchema},
   output: {schema: QuizAndExplanationOutputSchema},
   prompt: `You are an AI-powered quiz generator and explainer.
-
+  {{#if context}}
+  Context for this question: {{{context}}}
+  {{/if}}
   Generate a quiz question on the topic: {{{topic}}}.
   Provide 4 possible options, one of which is the correct answer.
   If the user provided an answer ({{{userAnswer}}}) that was incorrect, and the correct answer is ({{{correctAnswer}}}), provide a simplified explanation of why the correct answer is correct and why the user's answer was incorrect.

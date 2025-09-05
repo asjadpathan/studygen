@@ -84,10 +84,17 @@ export default function CreateRoadmapPage() {
     }
 
     try {
-      // Generate 3 quiz questions based on the user's goals
-      const questionPromises = Array(3).fill(null).map(() => 
-        generateQuizAndExplanation({ topic: values.goals })
+      // Generate 3 unique quiz questions based on the user's goals
+      const questionContexts = [
+        "This is question 1 of 3 for an initial skill assessment. Ask a foundational question.",
+        "This is question 2 of 3. Ask a slightly more advanced question than the first.",
+        "This is question 3 of 3. Ask a practical or application-based question."
+      ];
+      
+      const questionPromises = questionContexts.map(context => 
+        generateQuizAndExplanation({ topic: values.goals, context: context })
       );
+
       const questions = await Promise.all(questionPromises);
       setQuizQuestions(questions);
       setStep('quiz');
@@ -138,6 +145,7 @@ export default function CreateRoadmapPage() {
         quizSummary,
         ...result,
         createdAt: serverTimestamp(),
+        completedConcepts: [],
       });
       
       toast({
