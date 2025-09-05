@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,6 +48,7 @@ interface Roadmap {
     concepts: string[];
   }[];
   completedConcepts?: string[];
+  explanations?: Record<string, GetConceptExplanationOutput>;
 }
 
 type QuizState = 'idle' | 'loading' | 'ready' | 'answered';
@@ -118,8 +119,17 @@ export default function RoadmapDetailPage() {
     setQuizConceptKey(null);
     setQuizData(null);
     setQuizState('idle');
-    setIsLoadingExplanation(true);
     setExplanation(null);
+    setIsLoadingExplanation(true);
+    
+    // Check if explanation is already cached
+    if (currentRoadmap.explanations && currentRoadmap.explanations[concept]) {
+        setExplanation(currentRoadmap.explanations[concept]);
+        setIsLoadingExplanation(false);
+        return;
+    }
+
+    // If not cached, generate it
     try {
       const result = await getConceptExplanation({
         concept: concept,
@@ -127,6 +137,16 @@ export default function RoadmapDetailPage() {
         expertise: currentRoadmap.expertise,
       });
       setExplanation(result);
+      
+      // Cache the result in Firestore
+      const user = auth.currentUser;
+      if(user) {
+        const docRef = doc(db, 'users', user.uid, 'roadmaps', currentRoadmap.id);
+        await updateDoc(docRef, {
+            [`explanations.${concept}`]: result
+        });
+      }
+
     } catch (err) {
       console.error(err);
       setExplanation({ explanation: "Sorry, we couldn't generate an explanation for this concept." });
